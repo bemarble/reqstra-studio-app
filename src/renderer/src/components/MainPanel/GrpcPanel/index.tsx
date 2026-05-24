@@ -5,7 +5,7 @@ import { useAppStore, type Tab } from '../../../store/appStore'
 import { useProjectStore } from '../../../store/projectStore'
 import type { GrpcResponse, GrpcRequestParams, LogEntry } from '../../../../../shared/types/ipc'
 import type { GrpcEndpoint } from '../../../../../shared/types/project'
-import * as path from 'path'
+import * as path from 'path' // viteエイリアスでpath-browserifyにリダイレクトされる
 
 interface Props {
   tab: Tab
@@ -23,7 +23,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
 
   const endpoint = project?.collections
     .flatMap((c) => c.endpoints)
-    .find((ep) => ep.id === tab.endpointId) as GrpcEndpoint | undefined
+    .find((ep) => ep.id === tab.endpointId)
 
   const collection = project?.collections.find((c) =>
     c.endpoints.some((ep) => ep.id === tab.endpointId)
