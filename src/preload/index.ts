@@ -1,15 +1,17 @@
-// NOTE: This file will be replaced in Task 7 (IPC Bridge).
-// The actual contextBridge API (window.reqstraApi) is implemented there.
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
+import type { IpcApi } from '../shared/types/ipc'
 
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
+const api: IpcApi = {
+  openProject: () => ipcRenderer.invoke('project:open'),
+  saveProject: (project) => ipcRenderer.invoke('project:save', project),
+  listCases: (casesDir) => ipcRenderer.invoke('project:listCases', casesDir),
+  readCase: (absolutePath) => ipcRenderer.invoke('project:readCase', absolutePath),
+  writeCase: (absolutePath, content) =>
+    ipcRenderer.invoke('project:writeCase', absolutePath, content),
+  grpcReflect: (host, secure) => ipcRenderer.invoke('grpc:reflect', host, secure),
+  grpcRequest: (params) => ipcRenderer.invoke('grpc:request', params),
+  writeLog: (projectDir, entry) => ipcRenderer.invoke('log:write', projectDir, entry),
+  readLogs: (projectDir, date) => ipcRenderer.invoke('log:read', projectDir, date),
 }
+
+contextBridge.exposeInMainWorld('reqstraApi', api)
