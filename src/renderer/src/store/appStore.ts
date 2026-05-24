@@ -16,8 +16,8 @@ interface AppState {
   openTabs: Tab[]
   activeTabId: string | null
   setActiveProtocol: (protocol: Protocol) => void
-  setActiveEnvironmentId: (id: string) => void
-  setActiveProtocolTargetId: (id: string) => void
+  setActiveEnvironmentId: (id: string | null) => void
+  setActiveProtocolTargetId: (id: string | null) => void
   openTab: (tab: Tab) => void
   closeTab: (id: string) => void
   setActiveTabId: (id: string) => void

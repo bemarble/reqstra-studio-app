@@ -41,4 +41,13 @@ describe('useAppStore', () => {
     expect(result.current.openTabs).toHaveLength(0)
     expect(result.current.activeTabId).toBeNull()
   })
+
+  it('複数タブがある時にアクティブタブを閉じると最後のタブがアクティブになる', () => {
+    const { result } = renderHook(() => useAppStore())
+    act(() => result.current.openTab({ id: 'tab-1', label: 'GetUser', endpointId: 'ep-1', caseName: 'UserA' }))
+    act(() => result.current.openTab({ id: 'tab-2', label: 'ListUsers', endpointId: 'ep-2', caseName: 'All' }))
+    act(() => result.current.closeTab('tab-2'))
+    expect(result.current.openTabs).toHaveLength(1)
+    expect(result.current.activeTabId).toBe('tab-1')
+  })
 })
