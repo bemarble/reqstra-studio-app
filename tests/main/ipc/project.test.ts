@@ -25,6 +25,23 @@ describe('readProject', () => {
     expect(result.name).toBe('Test Project')
     expect(result.projectDir).toBe(dir)
   })
+
+  it('ファイル内のprojectDirより引数のprojectDirが優先される', async () => {
+    const dir = await tmpDir()
+    const project: ReqstraProject = {
+      name: 'Override Test',
+      projectDir: '/old/path/that/should/be/ignored',
+      environments: [],
+      collections: [],
+    }
+    await fs.writeFile(
+      path.join(dir, 'reqstra-project.json'),
+      JSON.stringify(project, null, 2)
+    )
+
+    const result = await readProject(dir)
+    expect(result.projectDir).toBe(dir)
+  })
 })
 
 describe('saveProject', () => {

@@ -5,7 +5,8 @@ import type { ReqstraProject } from '../../shared/types/project'
 export async function readProject(projectDir: string): Promise<ReqstraProject> {
   const filePath = path.join(projectDir, 'reqstra-project.json')
   const raw = await fs.readFile(filePath, 'utf-8')
-  const data = JSON.parse(raw) as ReqstraProject
+  // JSON.parse は any を返すため unknown 経由でアサートする
+  const data = JSON.parse(raw) as unknown as ReqstraProject
   data.projectDir = projectDir
   return data
 }
@@ -13,7 +14,7 @@ export async function readProject(projectDir: string): Promise<ReqstraProject> {
 export async function saveProject(project: ReqstraProject): Promise<void> {
   const { projectDir, ...data } = project
   const filePath = path.join(projectDir, 'reqstra-project.json')
-  await fs.writeFile(filePath, JSON.stringify({ ...data, projectDir }, null, 2))
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2))
 }
 
 export async function listCases(casesDir: string): Promise<string[]> {
