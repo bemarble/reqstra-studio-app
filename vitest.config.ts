@@ -13,9 +13,14 @@ export default defineConfig({
       {
         test: {
           name: 'renderer',
-          include: ['tests/renderer/**/*.test.tsx'],
+          include: ['tests/renderer/**/*.test.{ts,tsx}'],
           environment: 'jsdom',
           setupFiles: ['tests/setup.ts'],
+          resolve: {
+            alias: {
+              path: 'path-browserify',
+            },
+          },
         },
       },
     ],
