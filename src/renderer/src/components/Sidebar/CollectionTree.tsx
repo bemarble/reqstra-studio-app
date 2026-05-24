@@ -40,7 +40,7 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const handleCaseClick = (col: Collection, ep: GrpcEndpoint, caseName: string): void => {
+  const handleCaseClick = (_col: Collection, ep: GrpcEndpoint, caseName: string): void => {
     openTab({
       id: `${ep.id}::${caseName}`,
       label: `${ep.name} / ${caseName.replace(/\.ya?ml$/, '')}`,

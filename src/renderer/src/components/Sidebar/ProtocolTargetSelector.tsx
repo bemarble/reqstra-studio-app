@@ -12,6 +12,7 @@ export function ProtocolTargetSelector(): JSX.Element {
     project?.environments.find((e) => e.id === activeEnvironmentId) ??
     project?.environments[0]
 
+  // 各プロトコルターゲット型（GrpcTarget等）は name/id を共通で持つため共通型にキャストする
   const targets = (env?.protocols?.[activeProtocol] as Array<{ id: string; name: string }> | undefined) ?? []
   const active = targets.find((t) => t.id === activeProtocolTargetId) ?? targets[0]
 
