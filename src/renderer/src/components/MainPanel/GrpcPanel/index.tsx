@@ -74,8 +74,12 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
     }
 
     setIsLoading(true)
-    const result = await window.reqstraApi.grpcRequest(params)
-    setIsLoading(false)
+    let result: GrpcResponse
+    try {
+      result = await window.reqstraApi.grpcRequest(params)
+    } finally {
+      setIsLoading(false)
+    }
     setResponse(result)
 
     const logEntry: LogEntry = {
