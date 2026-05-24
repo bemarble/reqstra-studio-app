@@ -1,0 +1,23 @@
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    projects: [
+      {
+        test: {
+          name: 'main',
+          include: ['tests/main/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
+          name: 'renderer',
+          include: ['tests/renderer/**/*.test.tsx'],
+          environment: 'jsdom',
+          setupFiles: ['tests/setup.ts'],
+        },
+      },
+    ],
+  },
+})
