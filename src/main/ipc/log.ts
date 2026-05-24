@@ -21,8 +21,12 @@ export async function readLogs(projectDir: string, date: string): Promise<LogEnt
       .trim()
       .split('\n')
       .filter(Boolean)
+      // JSON.parse の戻り値は any のため unknown 経由でキャストする
       .map((line) => JSON.parse(line) as unknown as LogEntry)
-  } catch {
-    return []
+  } catch (e) {
+    if (e instanceof Error && 'code' in e && (e as NodeJS.ErrnoException).code === 'ENOENT') {
+      return []
+    }
+    throw e
   }
 }
