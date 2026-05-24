@@ -68,4 +68,19 @@ describe('listCases / readCase / writeCase', () => {
 
     expect(content).toBe('user_id: "alice"\nrole: "admin"')
   })
+
+  it('存在しないディレクトリは空配列を返す', async () => {
+    const cases = await listCases('/tmp/non-existent-reqstra-test-dir-xyz')
+    expect(cases).toEqual([])
+  })
+
+  it('存在しないネスト先ディレクトリも作成して書き込む', async () => {
+    const dir = await tmpDir()
+    const filePath = path.join(dir, 'nested', 'deep', 'UserA.yaml')
+
+    await writeCase(filePath, 'user_id: "alice"')
+    const content = await readCase(filePath)
+
+    expect(content).toBe('user_id: "alice"')
+  })
 })
