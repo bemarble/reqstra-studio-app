@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import { MonacoEditor } from '../../shared/MonacoEditor'
 import type { GrpcResponse } from '../../../../../shared/types/ipc'
 

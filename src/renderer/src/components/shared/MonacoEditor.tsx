@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import Editor, { type OnChange } from '@monaco-editor/react'
 
 interface Props {

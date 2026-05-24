@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type JSX } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponseViewer } from './ResponseViewer'
 import { useAppStore, type Tab } from '../../../store/appStore'
 import { useProjectStore } from '../../../store/projectStore'
 import type { GrpcResponse, GrpcRequestParams, LogEntry } from '../../../../../shared/types/ipc'
-import type { GrpcEndpoint } from '../../../../../shared/types/project'
 import * as path from 'path' // viteエイリアスでpath-browserifyにリダイレクトされる
 
 interface Props {

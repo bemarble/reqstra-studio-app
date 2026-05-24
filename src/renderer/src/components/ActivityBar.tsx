@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { useAppStore, type Protocol } from '../store/appStore'
 
 const PROTOCOLS: { id: Protocol; label: string; icon: string }[] = [

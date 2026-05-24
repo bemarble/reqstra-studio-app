@@ -31,6 +31,21 @@
     "yaml": "^2.9.0",
     "zustand": "^5.0.13"
   },
+  "build": {
+    "appId": "com.reqstra.studio",
+    "productName": "Reqstra Studio",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
+    },
+    "dmg": {
+      "title": "Reqstra Studio"
+    },
+    "files": ["out/**/*"],
+    "directories": {
+      "buildResources": "build"
+    }
+  },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
     "@electron-toolkit/eslint-config-ts": "^2.0.0",

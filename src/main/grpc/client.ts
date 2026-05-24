@@ -55,26 +55,34 @@ export async function executeGrpcRequest(
     }
 
     return await new Promise<GrpcResponse>((resolve) => {
-      // @ts-expect-error: grpcクライアントの動的メソッド呼び出し（型定義が静的に解決できないため）
-      client[methodName](requestBody, grpcMetadata, (err: grpc.ServiceError | null, response: unknown, trailers?: grpc.Metadata) => {
-        const durationMs = Date.now() - start
-        if (err) {
-          resolve({
-            status: 'ERROR',
-            body: null,
-            trailers: {},
-            durationMs,
-            error: err.message,
-          })
-        } else {
-          resolve({
-            status: 'OK',
-            body: response,
-            trailers: trailers?.getMap() ?? {},
-            durationMs,
-          })
+      // grpcクライアントの動的メソッド呼び出し（型定義が静的に解決できないため unknown 経由でキャスト）
+      ;(client as unknown as Record<string, (...args: unknown[]) => void>)[methodName](
+        requestBody,
+        grpcMetadata,
+        (err: grpc.ServiceError | null, response: unknown, trailers?: grpc.Metadata) => {
+          const durationMs = Date.now() - start
+          if (err) {
+            resolve({
+              status: 'ERROR',
+              body: null,
+              trailers: {},
+              durationMs,
+              error: err.message,
+            })
+          } else {
+            const rawTrailers = trailers?.getMap() ?? {}
+            const stringTrailers: Record<string, string> = Object.fromEntries(
+              Object.entries(rawTrailers).map(([k, v]) => [k, String(v)])
+            )
+            resolve({
+              status: 'OK',
+              body: response,
+              trailers: stringTrailers,
+              durationMs,
+            })
+          }
         }
-      })
+      )
     })
   } catch (e) {
     return {

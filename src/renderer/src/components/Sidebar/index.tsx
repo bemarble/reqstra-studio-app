@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { useAppStore } from '../../store/appStore'
 import { EnvironmentSelector } from './EnvironmentSelector'
 import { ProtocolTargetSelector } from './ProtocolTargetSelector'

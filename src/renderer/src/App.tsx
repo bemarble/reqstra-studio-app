@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { ActivityBar } from './components/ActivityBar'
 import { Sidebar } from './components/Sidebar'
 import { MainPanel } from './components/MainPanel'
