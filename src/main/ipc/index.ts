@@ -17,7 +17,10 @@ export function registerAllHandlers(): void {
     const projectDir = result.filePaths[0]
     try {
       return await readProject(projectDir)
-    } catch {
+    } catch (e) {
+      if (!(e instanceof Error && 'code' in e && (e as NodeJS.ErrnoException).code === 'ENOENT')) {
+        throw e
+      }
       const newProject: ReqstraProject = {
         name: path.basename(projectDir),
         projectDir,
