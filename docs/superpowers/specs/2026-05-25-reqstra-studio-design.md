@@ -69,8 +69,9 @@ VS Code 風のレイアウト。左端のアクティビティバーでプロト
 App
 ├── ActivityBar              # 左端：gRPC / GraphQL / HTTP 切り替え、環境設定
 ├── Sidebar
-│   ├── EnvironmentSelector  # 環境切り替えドロップダウン
-│   └── CollectionTree       # サービス → エンドポイント → ケース のツリー
+│   ├── EnvironmentSelector      # 環境切り替えドロップダウン（dev / stg / ...）
+│   ├── ProtocolTargetSelector   # 選択中プロトコルのターゲット選択（UserService host / OrderService host / ...）
+│   └── CollectionTree           # サービス → エンドポイント → ケース のツリー
 │       └── ケースの追加・削除・名前変更
 └── MainPanel
     ├── TabBar               # 複数ケースをタブで同時に開ける
@@ -125,12 +126,36 @@ my-project/
     {
       "id": "dev",
       "name": "Development",
-      "variables": { "host": "localhost:50051" }
+      "protocols": {
+        "grpc": [
+          { "id": "grpc-a", "name": "UserService",  "host": "localhost:50051", "secure": false },
+          { "id": "grpc-b", "name": "OrderService", "host": "localhost:50052", "secure": true }
+        ],
+        "graphql": [
+          { "id": "gql-a", "name": "Main API", "host": "localhost:8080" }
+        ],
+        "http": [
+          { "id": "http-a", "name": "REST API", "baseUrl": "http://localhost:3000" },
+          { "id": "http-b", "name": "Auth API", "baseUrl": "http://localhost:4000" }
+        ]
+      }
     },
     {
       "id": "stg",
       "name": "Staging",
-      "variables": { "host": "stg.example.com:50051" }
+      "protocols": {
+        "grpc": [
+          { "id": "grpc-a", "name": "UserService",  "host": "stg-user.example.com:50051", "secure": true },
+          { "id": "grpc-b", "name": "OrderService", "host": "stg-order.example.com:50051", "secure": true }
+        ],
+        "graphql": [
+          { "id": "gql-a", "name": "Main API", "host": "stg-api.example.com" }
+        ],
+        "http": [
+          { "id": "http-a", "name": "REST API", "baseUrl": "https://stg-api.example.com" },
+          { "id": "http-b", "name": "Auth API", "baseUrl": "https://stg-auth.example.com" }
+        ]
+      }
     }
   ],
   "collections": [
@@ -138,10 +163,7 @@ my-project/
       "id": "col-1",
       "protocol": "grpc",
       "name": "UserService",
-      "config": {
-        "host": "{{host}}",
-        "secure": false
-      },
+      "protocolTargetId": "grpc-a",
       "endpoints": [
         {
           "id": "ep-1",
@@ -154,6 +176,8 @@ my-project/
   ]
 }
 ```
+
+環境を切り替えると、`protocolTargetId` が同じ ID のターゲットに自動追従する。UIのサイドバーでは環境選択と、そのプロトコル内のターゲット選択の2段ドロップダウンになる。
 
 ### リクエストケースファイル（YAML・Raw body）
 
