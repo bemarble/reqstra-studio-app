@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
@@ -37,6 +37,10 @@ export function CollectionTree(): JSX.Element {
   const [isReflecting, setIsReflecting] = useState<boolean>(false)
   const [reflectError, setReflectError] = useState<string | null>(null)
   const [isReflected, setIsReflected] = useState<boolean>(false)
+
+  useEffect(() => {
+    setIsReflected(false)
+  }, [project?.projectDir])
 
   const collections = (project?.collections ?? []).filter((c) => c.protocol === activeProtocol)
 
