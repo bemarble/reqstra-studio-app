@@ -84,7 +84,9 @@ export function CollectionTree(): JSX.Element {
       useProjectStore.getState().setProject({ ...p, collections: [...kept, ...fetched] })
       await persistProject()
     } catch (e) {
-      setReflectError(e instanceof Error ? e.message : String(e))
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error('[grpc:reflect]', e)
+      setReflectError(msg)
     } finally {
       setIsReflecting(false)
     }
