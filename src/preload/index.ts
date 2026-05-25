@@ -9,6 +9,8 @@ const api: IpcApi = {
   writeCase: (absolutePath, content) =>
     ipcRenderer.invoke('project:writeCase', absolutePath, content),
   grpcReflect: (host, secure) => ipcRenderer.invoke('grpc:reflect', host, secure),
+  grpcDescribeMethod: (host, secure, method) =>
+    ipcRenderer.invoke('grpc:describeMethod', host, secure, method),
   grpcRequest: (params) => ipcRenderer.invoke('grpc:request', params),
   writeLog: (projectDir, entry) => ipcRenderer.invoke('log:write', projectDir, entry),
   readLogs: (projectDir, date) => ipcRenderer.invoke('log:read', projectDir, date),
