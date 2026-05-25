@@ -154,14 +154,16 @@ export function CollectionTree(): JSX.Element {
                 <span className="truncate font-medium">{col.name}</span>
               </button>
               <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
-                  title="エンドポイントを追加"
-                  className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                >
-                  ＋
-                </button>
+                {col.protocol !== 'grpc' && (
+                  <button
+                    type="button"
+                    onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
+                    title="エンドポイントを追加"
+                    className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  >
+                    ＋
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setModalState({ type: 'edit-collection', collection: col })}
