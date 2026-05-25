@@ -1,5 +1,17 @@
 import type { JSX } from 'react'
-import Editor, { type OnChange } from '@monaco-editor/react'
+import Editor, { loader, type OnChange } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+
+window.MonacoEnvironment = {
+  getWorker(_: unknown, label: string): Worker {
+    if (label === 'json') return new jsonWorker()
+    return new editorWorker()
+  },
+}
+
+loader.config({ monaco })
 
 interface Props {
   value: string
