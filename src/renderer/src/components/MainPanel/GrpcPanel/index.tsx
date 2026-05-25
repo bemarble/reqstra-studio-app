@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type JSX } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponseViewer } from './ResponseViewer'
+import { ResizablePanes } from '../../shared/ResizablePanes'
 import { useAppStore, type Tab } from '../../../store/appStore'
 import { useProjectStore } from '../../../store/projectStore'
 import type { GrpcResponse, GrpcRequestParams, LogEntry } from '../../../../../shared/types/ipc'
@@ -39,6 +40,10 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
   const grpcTargets = (activeEnv?.protocols?.grpc as GrpcTarget[] | undefined) ?? []
   const activeTarget =
     grpcTargets.find((t) => t.id === activeProtocolTargetId) ?? grpcTargets[0]
+
+  const endpointLabel = endpoint
+    ? `${activeTarget ? activeTarget.host : '(ターゲット未設定)'} / ${endpoint.method}`
+    : tab.label
 
   useEffect(() => {
     if (!project || !endpoint) return
@@ -150,7 +155,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
           gRPC
         </span>
         <span className="flex-1 truncate text-xs text-[var(--color-text-secondary)]">
-          {endpoint?.method ?? tab.label}
+          {endpointLabel}
         </span>
 
         {tab.type === 'scratch' && (
@@ -189,8 +194,13 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
         </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden border-r border-[var(--color-border)]">
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanes
+          defaultLeftWidth={480}
+          minLeft={200}
+          minRight={200}
+          storageKey="pane-response-width"
+        >
           <RequestEditor
             tab={tab}
             body={body}
@@ -199,10 +209,8 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
             onBodyChange={handleBodyChange}
             onMetadataChange={setMetadata}
           />
-        </div>
-        <div className="w-80 overflow-hidden">
           <ResponseViewer response={response} isLoading={isLoading} />
-        </div>
+        </ResizablePanes>
       </div>
     </div>
   )

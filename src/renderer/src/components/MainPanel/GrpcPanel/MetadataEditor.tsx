@@ -22,13 +22,34 @@ export function MetadataEditor({ metadata, onChange }: Props): JSX.Element {
     onChange(next)
   }
 
+  const handleKeyChange = (oldKey: string, nextKey: string): void => {
+    if (oldKey === nextKey) return
+    const next: Record<string, string> = {}
+    for (const [k, v] of Object.entries(metadata)) {
+      next[k === oldKey ? nextKey : k] = v
+    }
+    onChange(next)
+  }
+
+  const handleValueChange = (key: string, value: string): void => {
+    onChange({ ...metadata, [key]: value })
+  }
+
   return (
     <div className="p-2 text-xs">
       <div className="mb-2 space-y-1">
-        {Object.entries(metadata).map(([k, v]) => (
-          <div key={k} className="flex items-center gap-2">
-            <span className="flex-1 text-[var(--color-text-accent)]">{k}</span>
-            <span className="flex-1 text-[var(--color-text-primary)]">{v}</span>
+        {Object.entries(metadata).map(([k, v], index) => (
+          <div key={index} className="flex items-center gap-2">
+            <input
+              value={k}
+              onChange={(e) => handleKeyChange(k, e.target.value)}
+              className="flex-1 rounded bg-[#3c3c3c] px-2 py-0.5 text-[var(--color-text-accent)] outline-none focus:ring-1 focus:ring-[var(--color-text-accent)]"
+            />
+            <input
+              value={v}
+              onChange={(e) => handleValueChange(k, e.target.value)}
+              className="flex-1 rounded bg-[#3c3c3c] px-2 py-0.5 text-[var(--color-text-primary)] outline-none focus:ring-1 focus:ring-[var(--color-text-accent)]"
+            />
             <button
               onClick={() => handleRemove(k)}
               className="text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"

@@ -2,15 +2,21 @@ import type { JSX } from 'react'
 import { ActivityBar } from './components/ActivityBar'
 import { Sidebar } from './components/Sidebar'
 import { MainPanel } from './components/MainPanel'
+import { ResizablePanes } from './components/shared/ResizablePanes'
 import { useProjectStore } from './store/projectStore'
 
 export default function App(): JSX.Element {
   const project = useProjectStore((s) => s.project)
   const setProject = useProjectStore((s) => s.setProject)
+  const setActiveCaseDirs = useProjectStore((s) => s.setActiveCaseDirs)
 
   const handleOpenProject = async (): Promise<void> => {
     const result = await window.reqstraApi.openProject()
-    if (result) setProject(result)
+    if (result) {
+      setProject(result)
+      const dirs = await window.reqstraApi.scanCaseDirs(result.projectDir)
+      setActiveCaseDirs(dirs)
+    }
   }
 
   if (!project) {
@@ -33,8 +39,15 @@ export default function App(): JSX.Element {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-bg-primary)]">
       <ActivityBar />
-      <Sidebar />
-      <MainPanel />
+      <ResizablePanes
+        defaultLeftWidth={240}
+        minLeft={160}
+        minRight={400}
+        storageKey="pane-sidebar-width"
+      >
+        <Sidebar />
+        <MainPanel />
+      </ResizablePanes>
     </div>
   )
 }

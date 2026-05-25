@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
@@ -26,6 +26,7 @@ export function CollectionTree(): JSX.Element {
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const openTab = useAppStore((s) => s.openTab)
   const closeTab = useAppStore((s) => s.closeTab)
+  const activeCaseDirs = useProjectStore((s) => s.activeCaseDirs)
 
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
   const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(new Set())
@@ -35,8 +36,21 @@ export function CollectionTree(): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [isReflecting, setIsReflecting] = useState<boolean>(false)
   const [reflectError, setReflectError] = useState<string | null>(null)
+  const [isReflected, setIsReflected] = useState<boolean>(false)
+
+  useEffect(() => {
+    setIsReflected(false)
+  }, [project?.projectDir])
 
   const collections = (project?.collections ?? []).filter((c) => c.protocol === activeProtocol)
+
+  const isEndpointVisible = (ep: GrpcEndpoint): boolean =>
+    activeProtocol !== 'grpc' || isReflected || activeCaseDirs.has(ep.casesDir)
+
+  const visibleCollections = collections.filter((col) =>
+    col.endpoints.some((ep) => isEndpointVisible(ep)),
+  )
+
   const activeEnv =
     project?.environments.find((e) => e.id === activeEnvironmentId) ?? project?.environments[0]
 
@@ -66,9 +80,6 @@ export function CollectionTree(): JSX.Element {
       const p = useProjectStore.getState().project
       if (!p) return
 
-      const kept = p.collections.filter(
-        (c) => !(c.protocol === 'grpc' && c.protocolTargetId === activeTarget.id),
-      )
       const fetched: Collection[] = services.map((svc) => ({
         id: crypto.randomUUID(),
         protocol: 'grpc' as const,
@@ -81,8 +92,16 @@ export function CollectionTree(): JSX.Element {
           casesDir: `requests/grpc/${svc.name}/${method}`,
         })),
       }))
-      useProjectStore.getState().setProject({ ...p, collections: [...kept, ...fetched] })
+
+      const existingNames = new Set(
+        p.collections
+          .filter((c) => c.protocol === 'grpc' && c.protocolTargetId === activeTarget.id)
+          .map((c) => c.name),
+      )
+      const toAdd = fetched.filter((c) => !existingNames.has(c.name))
+      useProjectStore.getState().setProject({ ...p, collections: [...p.collections, ...toAdd] })
       await persistProject()
+      setIsReflected(true)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       console.error('[grpc:reflect]', e)
@@ -213,10 +232,10 @@ export function CollectionTree(): JSX.Element {
       {saveError && <p className="px-2 pt-1 text-xs text-[var(--color-error)]">{saveError}</p>}
 
       <div className="flex-1 overflow-y-auto py-1 text-xs">
-        {collections.length === 0 && (
+        {visibleCollections.length === 0 && (
           <p className="px-3 text-[var(--color-text-secondary)]">コレクションなし</p>
         )}
-        {collections.map((col) => (
+        {visibleCollections.map((col) => (
           <div key={col.id}>
             <div className="group flex items-center px-2 py-0.5 hover:bg-[var(--color-bg-tertiary)]">
               <button
@@ -246,18 +265,22 @@ export function CollectionTree(): JSX.Element {
                 >
                   ✎
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleCollectionDelete(col.id)}
-                  title="コレクションを削除"
-                  className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
-                >
-                  ×
-                </button>
+                {col.protocol !== 'grpc' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCollectionDelete(col.id)}
+                    title="コレクションを削除"
+                    className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
             {expandedCollections.has(col.id) &&
-              col.endpoints.map((ep) => (
+              col.endpoints
+                .filter((ep) => isEndpointVisible(ep))
+                .map((ep) => (
                 <div key={ep.id}>
                   <div className="group flex items-center py-0.5 pl-5 pr-2 hover:bg-[var(--color-bg-tertiary)]">
                     <button
