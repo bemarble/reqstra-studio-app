@@ -31,13 +31,22 @@ const PRIMITIVE_DEFAULTS: Record<string, unknown> = {
   bytes: '',
 }
 
-function buildTemplate(fields: Record<string, ProtoField>): Record<string, unknown> {
+function buildTemplate(
+  fields: Record<string, ProtoField>,
+  visited: Set<object> = new Set(),
+): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const [name, field] of Object.entries(fields)) {
     if (field.rule === 'repeated') {
       result[name] = []
     } else if (field.resolvedType && 'fields' in field.resolvedType) {
-      result[name] = buildTemplate((field.resolvedType as ProtoType).fields)
+      const nested = field.resolvedType as ProtoType
+      if (visited.has(nested)) {
+        result[name] = {}
+      } else {
+        visited.add(nested)
+        result[name] = buildTemplate(nested.fields, visited)
+      }
     } else if (field.resolvedType) {
       result[name] = 0
     } else {
@@ -52,7 +61,9 @@ export async function describeMethod(
   secure: boolean,
   method: string,
 ): Promise<string> {
-  const [serviceName, methodName] = method.split('/')
+  const parts = method.split('/')
+  if (parts.length !== 2) return ''
+  const [serviceName, methodName] = parts
   if (!serviceName || !methodName) return ''
 
   const credentials = secure
@@ -66,6 +77,7 @@ export async function describeMethod(
     root.resolveAll()
 
     const service = root.lookupService(serviceName)
+    // protobufjs の Method 型は resolvedRequestType を静的に型付けしないため構造的にキャスト
     const methodDef = service.methods[methodName] as { resolvedRequestType: ProtoType | null } | undefined
     if (!methodDef?.resolvedRequestType) return ''
 
