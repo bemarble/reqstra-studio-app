@@ -8,9 +8,10 @@ interface Props {
   onDelete?: () => void
   onClose: () => void
   deleteWarning?: string
+  isSubmitting?: boolean
 }
 
-export function EnvironmentModal({ mode, initial, onSubmit, onDelete, onClose, deleteWarning }: Props): JSX.Element {
+export function EnvironmentModal({ mode, initial, onSubmit, onDelete, onClose, deleteWarning, isSubmitting }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
 
   const isValid = name.trim().length > 0
@@ -76,7 +77,7 @@ export function EnvironmentModal({ mode, initial, onSubmit, onDelete, onClose, d
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || !!isSubmitting}
             className="rounded bg-[var(--color-bg-active)] px-3 py-1 text-xs text-white disabled:opacity-50"
           >
             {mode === 'add' ? '追加' : '保存'}
