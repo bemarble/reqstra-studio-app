@@ -16,7 +16,7 @@ export function MainPanel(): JSX.Element {
       <div className="flex-1 overflow-hidden">
         {!activeTab && (
           <div className="flex h-full items-center justify-center text-[var(--color-text-secondary)]">
-            <p className="text-sm">サイドバーからケースを選択してください</p>
+            <p className="text-sm">サイドバーからエンドポイントまたはケースを選択してください</p>
           </div>
         )}
         {activeTab && activeProtocol === 'grpc' && (

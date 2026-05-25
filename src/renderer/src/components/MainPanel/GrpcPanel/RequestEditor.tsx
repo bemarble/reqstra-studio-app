@@ -9,11 +9,12 @@ interface Props {
   tab: Tab
   body: string
   metadata: Record<string, string>
+  language: string
   onBodyChange: (body: string) => void
   onMetadataChange: (metadata: Record<string, string>) => void
 }
 
-export function RequestEditor({ tab: _tab, body, metadata, onBodyChange, onMetadataChange }: Props): JSX.Element {
+export function RequestEditor({ tab: _tab, body, metadata, language, onBodyChange, onMetadataChange }: Props): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabName>('request')
 
   return (
@@ -31,7 +32,7 @@ export function RequestEditor({ tab: _tab, body, metadata, onBodyChange, onMetad
       </div>
       <div className="flex-1 overflow-hidden">
         {activeTab === 'request' && (
-          <MonacoEditor value={body} onChange={(v) => onBodyChange(v ?? '')} language="yaml" />
+          <MonacoEditor value={body} onChange={(v) => onBodyChange(v ?? '')} language={language} />
         )}
         {activeTab === 'metadata' && (
           <MetadataEditor metadata={metadata} onChange={onMetadataChange} />

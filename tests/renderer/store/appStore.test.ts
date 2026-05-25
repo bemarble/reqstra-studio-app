@@ -21,14 +21,28 @@ describe('useAppStore', () => {
 
   it('タブを開く', () => {
     const { result } = renderHook(() => useAppStore())
-    act(() => result.current.openTab({ id: 'tab-1', label: 'GetUser', endpointId: 'ep-1', caseName: 'UserA' }))
+    act(() =>
+      result.current.openTab({
+        type: 'case',
+        id: 'tab-1',
+        label: 'GetUser',
+        endpointId: 'ep-1',
+        caseName: 'UserA.yaml',
+      }),
+    )
     expect(result.current.openTabs).toHaveLength(1)
     expect(result.current.activeTabId).toBe('tab-1')
   })
 
   it('同じタブを二重に開かない', () => {
     const { result } = renderHook(() => useAppStore())
-    const tab = { id: 'tab-1', label: 'GetUser', endpointId: 'ep-1', caseName: 'UserA' }
+    const tab = {
+      type: 'case' as const,
+      id: 'tab-1',
+      label: 'GetUser',
+      endpointId: 'ep-1',
+      caseName: 'UserA.yaml',
+    }
     act(() => result.current.openTab(tab))
     act(() => result.current.openTab(tab))
     expect(result.current.openTabs).toHaveLength(1)
@@ -36,7 +50,15 @@ describe('useAppStore', () => {
 
   it('タブを閉じる', () => {
     const { result } = renderHook(() => useAppStore())
-    act(() => result.current.openTab({ id: 'tab-1', label: 'GetUser', endpointId: 'ep-1', caseName: 'UserA' }))
+    act(() =>
+      result.current.openTab({
+        type: 'case',
+        id: 'tab-1',
+        label: 'GetUser',
+        endpointId: 'ep-1',
+        caseName: 'UserA.yaml',
+      }),
+    )
     act(() => result.current.closeTab('tab-1'))
     expect(result.current.openTabs).toHaveLength(0)
     expect(result.current.activeTabId).toBeNull()
@@ -44,10 +66,65 @@ describe('useAppStore', () => {
 
   it('複数タブがある時にアクティブタブを閉じると最後のタブがアクティブになる', () => {
     const { result } = renderHook(() => useAppStore())
-    act(() => result.current.openTab({ id: 'tab-1', label: 'GetUser', endpointId: 'ep-1', caseName: 'UserA' }))
-    act(() => result.current.openTab({ id: 'tab-2', label: 'ListUsers', endpointId: 'ep-2', caseName: 'All' }))
+    act(() =>
+      result.current.openTab({
+        type: 'case',
+        id: 'tab-1',
+        label: 'GetUser',
+        endpointId: 'ep-1',
+        caseName: 'UserA.yaml',
+      }),
+    )
+    act(() =>
+      result.current.openTab({
+        type: 'case',
+        id: 'tab-2',
+        label: 'ListUsers',
+        endpointId: 'ep-2',
+        caseName: 'All.yaml',
+      }),
+    )
     act(() => result.current.closeTab('tab-2'))
     expect(result.current.openTabs).toHaveLength(1)
     expect(result.current.activeTabId).toBe('tab-1')
+  })
+
+  it('スクラッチタブを開く', () => {
+    const { result } = renderHook(() => useAppStore())
+    act(() =>
+      result.current.openTab({
+        type: 'scratch',
+        id: 'scratch::ep-1',
+        label: 'GetUser',
+        endpointId: 'ep-1',
+      }),
+    )
+    expect(result.current.openTabs).toHaveLength(1)
+    expect(result.current.openTabs[0].type).toBe('scratch')
+    expect(result.current.activeTabId).toBe('scratch::ep-1')
+  })
+
+  it('replaceTab でスクラッチタブをケースタブに変換する', () => {
+    const { result } = renderHook(() => useAppStore())
+    act(() =>
+      result.current.openTab({
+        type: 'scratch',
+        id: 'scratch::ep-1',
+        label: 'GetUser',
+        endpointId: 'ep-1',
+      }),
+    )
+    act(() =>
+      result.current.replaceTab('scratch::ep-1', {
+        type: 'case',
+        id: 'ep-1::test.yaml',
+        label: 'GetUser / test',
+        endpointId: 'ep-1',
+        caseName: 'test.yaml',
+      }),
+    )
+    expect(result.current.openTabs).toHaveLength(1)
+    expect(result.current.openTabs[0].type).toBe('case')
+    expect(result.current.activeTabId).toBe('ep-1::test.yaml')
   })
 })

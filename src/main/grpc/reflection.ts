@@ -10,6 +10,8 @@ export function buildServiceList(rawServiceNames: string[]): GrpcServiceInfo[] {
     .map((name) => ({ name, methods: [] }))
 }
 
+const REFLECT_TIMEOUT_MS = 5000
+
 export async function reflectServices(
   host: string,
   secure: boolean
@@ -19,7 +21,15 @@ export async function reflectServices(
     : grpc.credentials.createInsecure()
 
   const client = new GrpcReflection(host, credentials)
-  const rawServices = await client.listServices()
+
+  const rawServices = await new Promise<string[]>((resolve, reject) => {
+    const timerId = setTimeout(() => reject(new Error('タイムアウト')), REFLECT_TIMEOUT_MS)
+    client.listServices().then(
+      (result) => { clearTimeout(timerId); resolve(result) },
+      (err: unknown) => { clearTimeout(timerId); reject(err) },
+    )
+  })
+
   const serviceList = buildServiceList(rawServices)
 
   const results: GrpcServiceInfo[] = []

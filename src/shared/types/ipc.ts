@@ -41,6 +41,7 @@ export interface IpcApi {
   writeCase: (absolutePath: string, content: string) => Promise<void>
   listCases: (absoluteCasesDir: string) => Promise<string[]>
   grpcReflect: (host: string, secure: boolean) => Promise<GrpcServiceInfo[]>
+  grpcDescribeMethod: (host: string, secure: boolean, method: string) => Promise<string>
   grpcRequest: (params: GrpcRequestParams) => Promise<GrpcResponse>
   writeLog: (projectDir: string, entry: LogEntry) => Promise<void>
   readLogs: (projectDir: string, date: string) => Promise<LogEntry[]>
