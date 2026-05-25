@@ -61,6 +61,31 @@ describe('ProtocolTargetModal — grpc', () => {
     fireEvent.click(screen.getByRole('button', { name: '削除' }))
     expect(onDelete).toHaveBeenCalled()
   })
+
+  it('削除確認でキャンセルするとonDeleteは呼ばれない', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const onDelete = vi.fn()
+    const target = { id: 'grpc-1', name: 'Local', host: 'localhost:50051', secure: false }
+    render(
+      <ProtocolTargetModal
+        mode="edit"
+        protocol="grpc"
+        initial={target}
+        onSubmit={vi.fn()}
+        onDelete={onDelete}
+        onClose={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: '削除' }))
+    expect(onDelete).not.toHaveBeenCalled()
+  })
+
+  it('キャンセルボタンでonCloseが呼ばれる', () => {
+    const onClose = vi.fn()
+    render(<ProtocolTargetModal mode="add" protocol="grpc" onSubmit={vi.fn()} onClose={onClose} />)
+    fireEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
+    expect(onClose).toHaveBeenCalled()
+  })
 })
 
 describe('ProtocolTargetModal — http', () => {
