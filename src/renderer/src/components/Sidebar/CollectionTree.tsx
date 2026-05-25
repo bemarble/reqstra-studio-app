@@ -245,7 +245,9 @@ export function CollectionTree(): JSX.Element {
                       type="button"
                       className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-primary)]"
                       onClick={() => {
-                        void toggleEndpoint(ep)
+                        if (!expandedEndpoints.has(ep.id)) {
+                          void toggleEndpoint(ep)
+                        }
                         openTab({
                           type: 'scratch',
                           id: `scratch::${ep.id}`,
