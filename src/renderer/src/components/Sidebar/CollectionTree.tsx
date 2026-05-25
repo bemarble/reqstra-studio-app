@@ -1,4 +1,4 @@
-import { useState, useEffect, type JSX } from 'react'
+import { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
@@ -38,6 +38,11 @@ export function CollectionTree(): JSX.Element {
   const [isReflecting, setIsReflecting] = useState<boolean>(false)
   const [reflectError, setReflectError] = useState<string | null>(null)
   const [isReflected, setIsReflected] = useState<boolean>(false)
+  const [pendingDuplicate, setPendingDuplicate] = useState<{
+    endpointId: string
+    sourceName: string
+    inputValue: string
+  } | null>(null)
 
   useEffect(() => {
     setIsReflected(false)
@@ -144,6 +149,37 @@ export function CollectionTree(): JSX.Element {
       endpointId: ep.id,
       caseName,
     })
+  }
+
+  const handleCaseDuplicate = (ep: GrpcEndpoint, caseName: string): void => {
+    const base = caseName.replace(/\.ya?ml$/, '')
+    setPendingDuplicate({ endpointId: ep.id, sourceName: caseName, inputValue: `${base}_copy` })
+  }
+
+  const handleCaseDuplicateConfirm = async (ep: GrpcEndpoint): Promise<void> => {
+    if (!project || !pendingDuplicate) return
+    const rawName = pendingDuplicate.inputValue.trim()
+    const sourceName = pendingDuplicate.sourceName
+    if (!rawName) {
+      setPendingDuplicate(null)
+      return
+    }
+    const ext = sourceName.match(/\.ya?ml$/)?.[0] ?? '.yaml'
+    const newName = rawName.endsWith('.yaml') || rawName.endsWith('.yml') ? rawName : `${rawName}${ext}`
+    const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+    setPendingDuplicate(null)
+    try {
+      const freshCases = await window.reqstraApi.listCases(casesAbsDir)
+      if (freshCases.includes(newName)) {
+        alert(`"${newName.replace(/\.ya?ml$/, '')}" はすでに存在します`)
+        return
+      }
+      const content = await window.reqstraApi.readCase(path.join(casesAbsDir, sourceName))
+      await window.reqstraApi.writeCase(path.join(casesAbsDir, newName), content)
+      setCasesForEndpoint(ep.id, [...freshCases, newName])
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e))
+    }
   }
 
   const handleCaseDelete = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
@@ -326,26 +362,57 @@ export function CollectionTree(): JSX.Element {
                   </div>
                   {expandedEndpoints.has(ep.id) &&
                     (casesByEndpoint[ep.id] ?? []).map((caseName) => (
-                      <div
-                        key={caseName}
-                        className="group flex items-center py-0.5 pl-10 pr-2 hover:bg-[var(--color-bg-tertiary)]"
-                      >
-                        <button
-                          type="button"
-                          className="min-w-0 flex-1 truncate text-left text-[var(--color-text-secondary)] hover:text-white"
-                          onClick={() => handleCaseClick(col, ep, caseName)}
+                      <Fragment key={caseName}>
+                        <div
+                          className="group flex items-center py-0.5 pl-10 pr-2 hover:bg-[var(--color-bg-tertiary)]"
                         >
-                          {caseName.replace(/\.ya?ml$/, '')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleCaseDelete(ep, caseName)}
-                          title="ケースを削除"
-                          className="shrink-0 rounded px-1 py-0.5 opacity-0 group-hover:opacity-100 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
-                        >
-                          ×
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 truncate text-left text-[var(--color-text-secondary)] hover:text-white"
+                            onClick={() => handleCaseClick(col, ep, caseName)}
+                          >
+                            {caseName.replace(/\.ya?ml$/, '')}
+                          </button>
+                          <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => handleCaseDuplicate(ep, caseName)}
+                              title="ケースを複製"
+                              className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                            >
+                              ⎘
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleCaseDelete(ep, caseName)}
+                              title="ケースを削除"
+                              className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                        {pendingDuplicate?.endpointId === ep.id &&
+                          pendingDuplicate.sourceName === caseName && (
+                            <div className="flex items-center py-0.5 pl-10 pr-2">
+                              <input
+                                type="text"
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
+                                autoFocus
+                                value={pendingDuplicate.inputValue}
+                                onChange={(e) =>
+                                  setPendingDuplicate({ ...pendingDuplicate, inputValue: e.target.value })
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') void handleCaseDuplicateConfirm(ep)
+                                  if (e.key === 'Escape') setPendingDuplicate(null)
+                                }}
+                                onBlur={() => setPendingDuplicate(null)}
+                                className="w-full rounded border border-[var(--color-text-accent)] bg-[#3c3c3c] px-1.5 py-0.5 text-xs text-[var(--color-text-primary)] outline-none"
+                              />
+                            </div>
+                          )}
+                      </Fragment>
                     ))}
                 </div>
               ))}
