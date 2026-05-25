@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import React, { useState, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { Environment } from '../../../../shared/types/project'
@@ -16,6 +16,7 @@ export function EnvironmentSelector(): JSX.Element {
 
   const [modal, setModal] = useState<ModalState>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   const active = environments.find((e) => e.id === activeEnvironmentId) ?? environments[0]
 
@@ -48,22 +49,32 @@ export function EnvironmentSelector(): JSX.Element {
   }
 
   const handleSubmit = async (env: Environment): Promise<void> => {
-    if (modal?.type === 'add') {
-      addEnvironment(env)
-      setActiveEnvironmentId(env.id)
-    } else {
-      updateEnvironment(env)
+    setIsSubmitting(true)
+    try {
+      if (modal?.type === 'add') {
+        addEnvironment(env)
+        setActiveEnvironmentId(env.id)
+      } else {
+        updateEnvironment(env)
+      }
+      if (await persistProject()) setModal(null)
+    } finally {
+      setIsSubmitting(false)
     }
-    if (await persistProject()) setModal(null)
   }
 
   const handleDelete = async (id: string): Promise<void> => {
-    deleteEnvironment(id)
-    if (activeEnvironmentId === id) {
-      const remaining = useProjectStore.getState().project?.environments ?? []
-      setActiveEnvironmentId(remaining[0]?.id ?? null)
+    setIsSubmitting(true)
+    try {
+      deleteEnvironment(id)
+      if (activeEnvironmentId === id) {
+        const remaining = useProjectStore.getState().project?.environments ?? []
+        setActiveEnvironmentId(remaining[0]?.id ?? null)
+      }
+      if (await persistProject()) setModal(null)
+    } finally {
+      setIsSubmitting(false)
     }
-    if (await persistProject()) setModal(null)
   }
 
   return (
@@ -108,6 +119,7 @@ export function EnvironmentSelector(): JSX.Element {
           onSubmit={handleSubmit}
           onDelete={modal.type === 'edit' ? () => handleDelete(modal.env.id) : undefined}
           deleteWarning={modal.type === 'edit' ? getDeleteWarning(modal.env.id) : undefined}
+          isSubmitting={isSubmitting}
           onClose={() => setModal(null)}
         />
       )}
