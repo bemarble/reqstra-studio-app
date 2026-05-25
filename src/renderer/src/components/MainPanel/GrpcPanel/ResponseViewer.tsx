@@ -2,6 +2,14 @@ import { useState, type JSX } from 'react'
 import { MonacoEditor } from '../../shared/MonacoEditor'
 import type { GrpcResponse } from '../../../../../shared/types/ipc'
 
+const GRPC_STATUS: Record<number, string> = {
+  0: 'OK', 1: 'CANCELLED', 2: 'UNKNOWN', 3: 'INVALID_ARGUMENT',
+  4: 'DEADLINE_EXCEEDED', 5: 'NOT_FOUND', 6: 'ALREADY_EXISTS',
+  7: 'PERMISSION_DENIED', 8: 'RESOURCE_EXHAUSTED', 9: 'FAILED_PRECONDITION',
+  10: 'ABORTED', 11: 'OUT_OF_RANGE', 12: 'UNIMPLEMENTED', 13: 'INTERNAL',
+  14: 'UNAVAILABLE', 15: 'DATA_LOSS', 16: 'UNAUTHENTICATED',
+}
+
 interface Props {
   response: GrpcResponse | null
   isLoading: boolean
@@ -44,6 +52,11 @@ export function ResponseViewer({ response, isLoading }: Props): JSX.Element {
       </div>
       {response.status === 'ERROR' && (
         <div className="border-b border-[var(--color-border)] bg-[#2d1515] px-3 py-2 text-xs text-[var(--color-error)]">
+          {response.grpcCode !== undefined && (
+            <span className="mr-2 font-mono font-medium">
+              {GRPC_STATUS[response.grpcCode] ?? `CODE_${response.grpcCode}`}
+            </span>
+          )}
           {response.error}
         </div>
       )}

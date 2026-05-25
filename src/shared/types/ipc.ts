@@ -19,6 +19,7 @@ export interface GrpcResponse {
   trailers: Record<string, string>
   durationMs: number
   error?: string
+  grpcCode?: number
 }
 
 export interface LogEntry {
