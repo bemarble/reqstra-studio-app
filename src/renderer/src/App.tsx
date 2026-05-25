@@ -7,10 +7,15 @@ import { useProjectStore } from './store/projectStore'
 export default function App(): JSX.Element {
   const project = useProjectStore((s) => s.project)
   const setProject = useProjectStore((s) => s.setProject)
+  const setActiveCaseDirs = useProjectStore((s) => s.setActiveCaseDirs)
 
   const handleOpenProject = async (): Promise<void> => {
     const result = await window.reqstraApi.openProject()
-    if (result) setProject(result)
+    if (result) {
+      setProject(result)
+      const dirs = await window.reqstraApi.scanCaseDirs(result.projectDir)
+      setActiveCaseDirs(dirs)
+    }
   }
 
   if (!project) {
