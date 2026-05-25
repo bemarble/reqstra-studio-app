@@ -25,6 +25,7 @@ export function CollectionTree(): JSX.Element {
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const openTab = useAppStore((s) => s.openTab)
+  const closeTab = useAppStore((s) => s.closeTab)
 
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
   const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(new Set())
@@ -119,6 +120,22 @@ export function CollectionTree(): JSX.Element {
       endpointId: ep.id,
       caseName,
     })
+  }
+
+  const handleCaseDelete = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
+    if (!project) return
+    if (!window.confirm(`"${caseName.replace(/\.ya?ml$/, '')}" を削除しますか？`)) return
+    const absolutePath = path.join(project.projectDir, ep.casesDir, caseName)
+    try {
+      await window.reqstraApi.deleteCase(absolutePath)
+      setCasesByEndpoint((prev) => ({
+        ...prev,
+        [ep.id]: (prev[ep.id] ?? []).filter((c) => c !== caseName),
+      }))
+      closeTab(`${ep.id}::${caseName}`)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e))
+    }
   }
 
   const handleCollectionSubmit = async (col: Collection): Promise<void> => {
@@ -282,14 +299,26 @@ export function CollectionTree(): JSX.Element {
                   </div>
                   {expandedEndpoints.has(ep.id) &&
                     (casesByEndpoint[ep.id] ?? []).map((caseName) => (
-                      <button
+                      <div
                         key={caseName}
-                        type="button"
-                        className="block w-full py-0.5 pl-10 pr-2 text-left text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-active)] hover:text-white"
-                        onClick={() => handleCaseClick(col, ep, caseName)}
+                        className="group flex items-center py-0.5 pl-10 pr-2 hover:bg-[var(--color-bg-tertiary)]"
                       >
-                        {caseName.replace(/\.ya?ml$/, '')}
-                      </button>
+                        <button
+                          type="button"
+                          className="min-w-0 flex-1 truncate text-left text-[var(--color-text-secondary)] hover:text-white"
+                          onClick={() => handleCaseClick(col, ep, caseName)}
+                        >
+                          {caseName.replace(/\.ya?ml$/, '')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCaseDelete(ep, caseName)}
+                          title="ケースを削除"
+                          className="shrink-0 rounded px-1 py-0.5 opacity-0 group-hover:opacity-100 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                        >
+                          ×
+                        </button>
+                      </div>
                     ))}
                 </div>
               ))}
