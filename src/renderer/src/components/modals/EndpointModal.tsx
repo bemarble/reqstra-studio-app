@@ -8,9 +8,10 @@ interface Props {
   initial?: GrpcEndpoint
   onSubmit: (ep: GrpcEndpoint) => void
   onClose: () => void
+  isSubmitting?: boolean
 }
 
-export function EndpointModal({ mode, protocol, initial, onSubmit, onClose }: Props): JSX.Element {
+export function EndpointModal({ mode, protocol, initial, onSubmit, onClose, isSubmitting }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
   const [method, setMethod] = useState<string>(initial?.method ?? '')
 
@@ -83,7 +84,7 @@ export function EndpointModal({ mode, protocol, initial, onSubmit, onClose }: Pr
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || !!isSubmitting}
             className="rounded bg-[var(--color-bg-active)] px-3 py-1 text-xs text-white disabled:opacity-50"
           >
             {mode === 'add' ? '追加' : '保存'}

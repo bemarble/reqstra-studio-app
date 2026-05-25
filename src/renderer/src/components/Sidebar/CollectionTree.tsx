@@ -30,6 +30,7 @@ export function CollectionTree(): JSX.Element {
   const [casesByEndpoint, setCasesByEndpoint] = useState<Record<string, string[]>>({})
   const [modalState, setModalState] = useState<ModalState>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   const collections = (project?.collections ?? []).filter((c) => c.protocol === activeProtocol)
   const activeEnv =
@@ -80,12 +81,17 @@ export function CollectionTree(): JSX.Element {
   }
 
   const handleCollectionSubmit = async (col: Collection): Promise<void> => {
-    if (modalState?.type === 'add-collection') {
-      addCollection(col)
-    } else {
-      updateCollection(col)
+    setIsSubmitting(true)
+    try {
+      if (modalState?.type === 'add-collection') {
+        addCollection(col)
+      } else {
+        updateCollection(col)
+      }
+      if (await persistProject()) setModalState(null)
+    } finally {
+      setIsSubmitting(false)
     }
-    if (await persistProject()) setModalState(null)
   }
 
   const handleCollectionDelete = async (id: string): Promise<void> => {
@@ -95,12 +101,17 @@ export function CollectionTree(): JSX.Element {
   }
 
   const handleEndpointSubmit = async (ep: GrpcEndpoint): Promise<void> => {
-    if (modalState?.type === 'add-endpoint') {
-      addEndpoint(modalState.collectionId, ep)
-    } else if (modalState?.type === 'edit-endpoint') {
-      updateEndpoint(modalState.collectionId, ep)
+    setIsSubmitting(true)
+    try {
+      if (modalState?.type === 'add-endpoint') {
+        addEndpoint(modalState.collectionId, ep)
+      } else if (modalState?.type === 'edit-endpoint') {
+        updateEndpoint(modalState.collectionId, ep)
+      }
+      if (await persistProject()) setModalState(null)
+    } finally {
+      setIsSubmitting(false)
     }
-    if (await persistProject()) setModalState(null)
   }
 
   const handleEndpointDelete = async (collectionId: string, endpointId: string): Promise<void> => {
@@ -223,6 +234,7 @@ export function CollectionTree(): JSX.Element {
         <CollectionModal
           mode="add"
           environment={activeEnv}
+          isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
           onClose={() => setModalState(null)}
         />
@@ -232,6 +244,7 @@ export function CollectionTree(): JSX.Element {
           mode="edit"
           initial={modalState.collection}
           environment={activeEnv}
+          isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
           onClose={() => setModalState(null)}
         />
@@ -240,6 +253,7 @@ export function CollectionTree(): JSX.Element {
         <EndpointModal
           mode="add"
           protocol={activeProtocol}
+          isSubmitting={isSubmitting}
           onSubmit={handleEndpointSubmit}
           onClose={() => setModalState(null)}
         />
@@ -249,6 +263,7 @@ export function CollectionTree(): JSX.Element {
           mode="edit"
           protocol={activeProtocol}
           initial={modalState.endpoint}
+          isSubmitting={isSubmitting}
           onSubmit={handleEndpointSubmit}
           onClose={() => setModalState(null)}
         />

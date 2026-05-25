@@ -8,6 +8,7 @@ interface Props {
   onSubmit: (target: GrpcTarget | HttpTarget | GraphQLTarget) => void
   onDelete?: () => void
   onClose: () => void
+  isSubmitting?: boolean
 }
 
 const TITLES = {
@@ -16,7 +17,7 @@ const TITLES = {
   graphql: { add: 'GraphQLターゲットを追加', edit: 'GraphQLターゲットを編集' },
 }
 
-export function ProtocolTargetModal({ mode, protocol, initial, onSubmit, onDelete, onClose }: Props): JSX.Element {
+export function ProtocolTargetModal({ mode, protocol, initial, onSubmit, onDelete, onClose, isSubmitting }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
   const [host, setHost] = useState<string>(() => {
     if (protocol === 'grpc') return (initial as GrpcTarget | undefined)?.host ?? ''
@@ -146,7 +147,7 @@ export function ProtocolTargetModal({ mode, protocol, initial, onSubmit, onDelet
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || !!isSubmitting}
             className="rounded bg-[var(--color-bg-active)] px-3 py-1 text-xs text-white disabled:opacity-50"
           >
             {mode === 'add' ? '追加' : '保存'}

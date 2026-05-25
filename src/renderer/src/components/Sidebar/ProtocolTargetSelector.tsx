@@ -125,6 +125,7 @@ export function ProtocolTargetSelector(): JSX.Element {
           initial={modal.type === 'edit' ? modal.target : undefined}
           onSubmit={handleSubmit}
           onDelete={modal.type === 'edit' ? () => handleDelete(modal.target.id) : undefined}
+          isSubmitting={isSubmitting}
           onClose={() => setModal(null)}
         />
       )}

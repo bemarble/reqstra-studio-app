@@ -7,6 +7,7 @@ interface Props {
   environment: Environment | undefined
   onSubmit: (col: Collection) => void
   onClose: () => void
+  isSubmitting?: boolean
 }
 
 const PROTOCOL_LABELS = { grpc: 'gRPC', http: 'HTTP', graphql: 'GraphQL' }
@@ -20,7 +21,7 @@ function getTargets(
   return (environment?.protocols[protocol] as Array<{ id: string; name: string }> | undefined) ?? []
 }
 
-export function CollectionModal({ mode, initial, environment, onSubmit, onClose }: Props): JSX.Element {
+export function CollectionModal({ mode, initial, environment, onSubmit, onClose, isSubmitting }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
   const [protocol, setProtocol] = useState<'grpc' | 'http' | 'graphql'>(initial?.protocol ?? 'grpc')
   const availableTargets = getTargets(environment, protocol)
@@ -114,7 +115,7 @@ export function CollectionModal({ mode, initial, environment, onSubmit, onClose 
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || !!isSubmitting}
             className="rounded bg-[var(--color-bg-active)] px-3 py-1 text-xs text-white disabled:opacity-50"
           >
             {mode === 'add' ? '追加' : '保存'}
