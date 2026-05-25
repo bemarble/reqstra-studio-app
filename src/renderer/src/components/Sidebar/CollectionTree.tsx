@@ -54,7 +54,8 @@ export function CollectionTree(): JSX.Element {
 
   const handleReflect = async (): Promise<void> => {
     const grpcTargets = (activeEnv?.protocols?.grpc as GrpcTarget[] | undefined) ?? []
-    const activeTarget = grpcTargets.find((t) => t.id === activeProtocolTargetId)
+    const activeTarget =
+      grpcTargets.find((t) => t.id === activeProtocolTargetId) ?? grpcTargets[0]
     if (!activeTarget) return
 
     setIsReflecting(true)
@@ -170,7 +171,7 @@ export function CollectionTree(): JSX.Element {
             <button
               type="button"
               onClick={handleReflect}
-              disabled={isReflecting || !activeProtocolTargetId}
+              disabled={isReflecting || ((activeEnv?.protocols?.grpc as GrpcTarget[] | undefined) ?? []).length === 0}
               title="サーバーリフレクションでサービスを取得"
               className="rounded bg-[#3c3c3c] px-1.5 py-0.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40"
             >
