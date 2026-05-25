@@ -22,11 +22,11 @@ export function MetadataEditor({ metadata, onChange }: Props): JSX.Element {
     onChange(next)
   }
 
-  const handleKeyChange = (oldKey: string, newKey: string): void => {
-    if (oldKey === newKey) return
+  const handleKeyChange = (oldKey: string, nextKey: string): void => {
+    if (oldKey === nextKey) return
     const next: Record<string, string> = {}
     for (const [k, v] of Object.entries(metadata)) {
-      next[k === oldKey ? newKey : k] = v
+      next[k === oldKey ? nextKey : k] = v
     }
     onChange(next)
   }
@@ -38,8 +38,8 @@ export function MetadataEditor({ metadata, onChange }: Props): JSX.Element {
   return (
     <div className="p-2 text-xs">
       <div className="mb-2 space-y-1">
-        {Object.entries(metadata).map(([k, v]) => (
-          <div key={k} className="flex items-center gap-2">
+        {Object.entries(metadata).map(([k, v], index) => (
+          <div key={index} className="flex items-center gap-2">
             <input
               value={k}
               onChange={(e) => handleKeyChange(k, e.target.value)}
