@@ -11,24 +11,30 @@ interface Props {
 
 const PROTOCOL_LABELS = { grpc: 'gRPC', http: 'HTTP', graphql: 'GraphQL' }
 
+// EnvironmentProtocols の各プロパティは GrpcTarget[] | HttpTarget[] | GraphQLTarget[] 型だが
+// id/name は共通で持つため共通型にキャストして使う
+function getTargets(
+  environment: Environment | undefined,
+  protocol: 'grpc' | 'http' | 'graphql',
+): Array<{ id: string; name: string }> {
+  return (environment?.protocols[protocol] as Array<{ id: string; name: string }> | undefined) ?? []
+}
+
 export function CollectionModal({ mode, initial, environment, onSubmit, onClose }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
   const [protocol, setProtocol] = useState<'grpc' | 'http' | 'graphql'>(initial?.protocol ?? 'grpc')
-  const availableTargets =
-    (environment?.protocols[protocol] as Array<{ id: string; name: string }> | undefined) ?? []
+  const availableTargets = getTargets(environment, protocol)
   const [protocolTargetId, setProtocolTargetId] = useState<string>(
     initial?.protocolTargetId ?? availableTargets[0]?.id ?? '',
   )
 
   const handleProtocolChange = (next: 'grpc' | 'http' | 'graphql'): void => {
     setProtocol(next)
-    const targets =
-      (environment?.protocols[next] as Array<{ id: string; name: string }> | undefined) ?? []
+    const targets = getTargets(environment, next)
     setProtocolTargetId(targets[0]?.id ?? '')
   }
 
-  const currentTargets =
-    (environment?.protocols[protocol] as Array<{ id: string; name: string }> | undefined) ?? []
+  const currentTargets = getTargets(environment, protocol)
 
   const isValid = name.trim().length > 0
 
