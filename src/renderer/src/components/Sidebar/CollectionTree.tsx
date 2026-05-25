@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
-import type { Collection, GrpcEndpoint } from '../../../../shared/types/project'
+import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
 import { CollectionModal } from '../modals/CollectionModal'
 import { EndpointModal } from '../modals/EndpointModal'
 import * as path from 'path'
@@ -23,6 +23,7 @@ export function CollectionTree(): JSX.Element {
   const deleteEndpoint = useProjectStore((s) => s.deleteEndpoint)
   const activeProtocol = useAppStore((s) => s.activeProtocol)
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
+  const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const openTab = useAppStore((s) => s.openTab)
 
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
@@ -31,6 +32,8 @@ export function CollectionTree(): JSX.Element {
   const [modalState, setModalState] = useState<ModalState>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [isReflecting, setIsReflecting] = useState<boolean>(false)
+  const [reflectError, setReflectError] = useState<string | null>(null)
 
   const collections = (project?.collections ?? []).filter((c) => c.protocol === activeProtocol)
   const activeEnv =
@@ -46,6 +49,42 @@ export function CollectionTree(): JSX.Element {
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
       return false
+    }
+  }
+
+  const handleReflect = async (): Promise<void> => {
+    const grpcTargets = (activeEnv?.protocols?.grpc as GrpcTarget[] | undefined) ?? []
+    const activeTarget = grpcTargets.find((t) => t.id === activeProtocolTargetId)
+    if (!activeTarget) return
+
+    setIsReflecting(true)
+    setReflectError(null)
+    try {
+      const services = await window.reqstraApi.grpcReflect(activeTarget.host, activeTarget.secure)
+      const p = useProjectStore.getState().project
+      if (!p) return
+
+      const kept = p.collections.filter(
+        (c) => !(c.protocol === 'grpc' && c.protocolTargetId === activeTarget.id),
+      )
+      const fetched: Collection[] = services.map((svc) => ({
+        id: crypto.randomUUID(),
+        protocol: 'grpc' as const,
+        name: svc.name,
+        protocolTargetId: activeTarget.id,
+        endpoints: svc.methods.map((method) => ({
+          id: crypto.randomUUID(),
+          name: method,
+          method: `${svc.name}/${method}`,
+          casesDir: `requests/grpc/${svc.name}/${method}`,
+        })),
+      }))
+      useProjectStore.getState().setProject({ ...p, collections: [...kept, ...fetched] })
+      await persistProject()
+    } catch (e) {
+      setReflectError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setIsReflecting(false)
     }
   }
 
@@ -126,16 +165,30 @@ export function CollectionTree(): JSX.Element {
         <span className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
           コレクション
         </span>
-        <button
-          type="button"
-          onClick={() => setModalState({ type: 'add-collection' })}
-          title="コレクションを追加"
-          className="rounded bg-[var(--color-bg-active)] px-1.5 py-0.5 text-xs text-white"
-        >
-          ＋
-        </button>
+        <div className="flex items-center gap-1">
+          {activeProtocol === 'grpc' && (
+            <button
+              type="button"
+              onClick={handleReflect}
+              disabled={isReflecting || !activeProtocolTargetId}
+              title="サーバーリフレクションでサービスを取得"
+              className="rounded bg-[#3c3c3c] px-1.5 py-0.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40"
+            >
+              {isReflecting ? '取得中...' : '取得'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setModalState({ type: 'add-collection' })}
+            title="コレクションを追加"
+            className="rounded bg-[var(--color-bg-active)] px-1.5 py-0.5 text-xs text-white"
+          >
+            ＋
+          </button>
+        </div>
       </div>
 
+      {reflectError && <p className="px-2 pt-1 text-xs text-[var(--color-error)]">{reflectError}</p>}
       {saveError && <p className="px-2 pt-1 text-xs text-[var(--color-error)]">{saveError}</p>}
 
       <div className="flex-1 overflow-y-auto py-1 text-xs">
