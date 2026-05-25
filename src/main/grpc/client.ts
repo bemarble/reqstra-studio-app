@@ -3,6 +3,12 @@ import { GrpcReflection } from 'grpc-js-reflection-client'
 import * as yaml from 'yaml'
 import type { GrpcRequestParams, GrpcResponse } from '../../shared/types/ipc'
 
+export function metadataToRecord(metadata: grpc.Metadata): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(metadata.getMap()).map(([k, v]) => [k, String(v)])
+  )
+}
+
 export function parseYamlBody(raw: string): Record<string, unknown> {
   if (!raw.trim()) return {}
   try {
@@ -65,19 +71,16 @@ export async function executeGrpcRequest(
             resolve({
               status: 'ERROR',
               body: null,
-              trailers: {},
+              trailers: metadataToRecord(err.metadata),
               durationMs,
               error: err.message,
+              grpcCode: err.code,
             })
           } else {
-            const rawTrailers = trailers?.getMap() ?? {}
-            const stringTrailers: Record<string, string> = Object.fromEntries(
-              Object.entries(rawTrailers).map(([k, v]) => [k, String(v)])
-            )
             resolve({
               status: 'OK',
               body: response,
-              trailers: stringTrailers,
+              trailers: metadataToRecord(trailers ?? new grpc.Metadata()),
               durationMs,
             })
           }
