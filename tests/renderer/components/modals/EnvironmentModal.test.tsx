@@ -1,9 +1,13 @@
 import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { EnvironmentModal } from '../../../../src/renderer/src/components/modals/EnvironmentModal'
 
 describe('EnvironmentModal', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('名前が空の時は追加ボタンが無効', () => {
     render(<EnvironmentModal mode="add" onSubmit={vi.fn()} onClose={vi.fn()} />)
     expect(screen.getByRole('button', { name: '追加' })).toBeDisabled()

@@ -41,8 +41,9 @@ export function EnvironmentModal({ mode, initial, onSubmit, onDelete, onClose, d
         </h2>
 
         <div className="mb-4">
-          <label className="mb-1 block text-xs text-[var(--color-text-secondary)]">名前</label>
+          <label htmlFor="env-name" className="mb-1 block text-xs text-[var(--color-text-secondary)]">名前</label>
           <input
+            id="env-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
