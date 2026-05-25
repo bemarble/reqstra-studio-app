@@ -59,7 +59,7 @@ export function ResizablePanes({
 
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden">
-      <div style={{ width: leftWidth, minWidth: minLeft, flexShrink: 0 }} className="overflow-hidden">
+      <div style={{ width: leftWidth, minWidth: minLeft, flexShrink: 0 }} className="flex flex-col overflow-hidden">
         {children[0]}
       </div>
       <div
@@ -67,7 +67,7 @@ export function ResizablePanes({
         className="bg-transparent transition-colors hover:bg-[var(--color-text-accent)] active:bg-[var(--color-text-accent)]"
         onMouseDown={handleMouseDown}
       />
-      <div className="min-w-0 flex-1 overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         {children[1]}
       </div>
     </div>
