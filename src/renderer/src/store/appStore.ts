@@ -2,12 +2,22 @@ import { create } from 'zustand'
 
 export type Protocol = 'grpc' | 'graphql' | 'http'
 
-export interface Tab {
+export interface CaseTab {
+  type: 'case'
   id: string
   label: string
   endpointId: string
   caseName: string
 }
+
+export interface ScratchTab {
+  type: 'scratch'
+  id: string
+  label: string
+  endpointId: string
+}
+
+export type Tab = CaseTab | ScratchTab
 
 interface AppState {
   activeProtocol: Protocol
@@ -20,6 +30,7 @@ interface AppState {
   setActiveProtocolTargetId: (id: string | null) => void
   openTab: (tab: Tab) => void
   closeTab: (id: string) => void
+  replaceTab: (oldId: string, newTab: Tab) => void
   setActiveTabId: (id: string) => void
 }
 
@@ -29,7 +40,8 @@ export const useAppStore = create<AppState>((set) => ({
   activeProtocolTargetId: null,
   openTabs: [],
   activeTabId: null,
-  setActiveProtocol: (protocol) => set({ activeProtocol: protocol, openTabs: [], activeTabId: null }),
+  setActiveProtocol: (protocol) =>
+    set({ activeProtocol: protocol, openTabs: [], activeTabId: null }),
   setActiveEnvironmentId: (id) => set({ activeEnvironmentId: id }),
   setActiveProtocolTargetId: (id) => set({ activeProtocolTargetId: id }),
   openTab: (tab) =>
@@ -46,5 +58,10 @@ export const useAppStore = create<AppState>((set) => ({
         state.activeTabId === id ? (tabs[tabs.length - 1]?.id ?? null) : state.activeTabId
       return { openTabs: tabs, activeTabId }
     }),
+  replaceTab: (oldId, newTab) =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) => (t.id === oldId ? newTab : t)),
+      activeTabId: state.activeTabId === oldId ? newTab.id : state.activeTabId,
+    })),
   setActiveTabId: (id) => set({ activeTabId: id }),
 }))
