@@ -24,6 +24,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
   const [isTemplateLoading, setIsTemplateLoading] = useState<boolean>(false)
   const [saveNameInput, setSaveNameInput] = useState<string>('')
   const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const endpoint = project?.collections
     .flatMap((c) => c.endpoints)
@@ -56,7 +57,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
     setIsTemplateLoading(true)
     window.reqstraApi
       .grpcDescribeMethod(activeTarget.host, activeTarget.secure, endpoint.method)
-      .then((template) => setBody(template))
+      .then((template) => setBody((prev) => prev || template))
       .catch(() => setBody(''))
       .finally(() => setIsTemplateLoading(false))
   }, [tab.id, project, endpoint, activeTarget])
@@ -74,6 +75,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
   const handleSave = async (): Promise<void> => {
     const rawName = saveNameInput.trim()
     if (!rawName || !project || !endpoint) return
+    setSaveError(null)
     const caseName = rawName.endsWith('.yaml') ? rawName : `${rawName}.yaml`
     const filePath = path.join(project.projectDir, endpoint.casesDir, caseName)
 
@@ -88,7 +90,7 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
         caseName,
       })
     } catch (e) {
-      console.error(e)
+      setSaveError(e instanceof Error ? e.message : String(e))
     } finally {
       setIsSaving(false)
     }
@@ -173,6 +175,9 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
               {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
+        )}
+        {tab.type === 'scratch' && saveError && (
+          <span className="text-xs text-[var(--color-error)]">{saveError}</span>
         )}
 
         <button
