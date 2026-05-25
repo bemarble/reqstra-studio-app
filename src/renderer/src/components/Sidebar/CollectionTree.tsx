@@ -42,7 +42,9 @@ export function CollectionTree(): JSX.Element {
     setIsReflected(false)
   }, [project?.projectDir])
 
-  const collections = (project?.collections ?? []).filter((c) => c.protocol === activeProtocol)
+  const collections = (project?.collections ?? []).filter(
+    (c) => c.protocol === activeProtocol && c.protocolTargetId === activeProtocolTargetId,
+  )
 
   const isEndpointVisible = (ep: GrpcEndpoint): boolean =>
     activeProtocol !== 'grpc' || isReflected || activeCaseDirs.has(ep.casesDir)
