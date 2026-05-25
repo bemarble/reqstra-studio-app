@@ -113,6 +113,7 @@ export function CollectionTree(): JSX.Element {
 
   const handleCaseClick = (_col: Collection, ep: GrpcEndpoint, caseName: string): void => {
     openTab({
+      type: 'case',
       id: `${ep.id}::${caseName}`,
       label: `${ep.name} / ${caseName.replace(/\.ya?ml$/, '')}`,
       endpointId: ep.id,
@@ -243,7 +244,15 @@ export function CollectionTree(): JSX.Element {
                     <button
                       type="button"
                       className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-primary)]"
-                      onClick={() => toggleEndpoint(ep)}
+                      onClick={() => {
+                        void toggleEndpoint(ep)
+                        openTab({
+                          type: 'scratch',
+                          id: `scratch::${ep.id}`,
+                          label: ep.name,
+                          endpointId: ep.id,
+                        })
+                      }}
                     >
                       <span className="mr-1 shrink-0">{expandedEndpoints.has(ep.id) ? '▾' : '▸'}</span>
                       <span className="truncate">{ep.name}</span>
