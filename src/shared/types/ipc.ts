@@ -39,6 +39,7 @@ export interface IpcApi {
   saveProject: (project: ReqstraProject) => Promise<void>
   readCase: (absolutePath: string) => Promise<string>
   writeCase: (absolutePath: string, content: string) => Promise<void>
+  deleteCase: (absolutePath: string) => Promise<void>
   listCases: (absoluteCasesDir: string) => Promise<string[]>
   grpcReflect: (host: string, secure: boolean) => Promise<GrpcServiceInfo[]>
   grpcDescribeMethod: (host: string, secure: boolean, method: string) => Promise<string>
