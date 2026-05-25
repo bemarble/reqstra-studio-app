@@ -12,11 +12,8 @@ import type {
 interface ProjectState {
   project: ReqstraProject | null
   activeCaseDirs: Set<string>
-  casesByEndpoint: Record<string, string[]>
   setProject: (project: ReqstraProject) => void
   setActiveCaseDirs: (dirs: string[]) => void
-  addActiveCasesDir: (dir: string) => void
-  setCasesForEndpoint: (endpointId: string, cases: string[]) => void
   updateCollection: (collection: Collection) => void
   addCollection: (collection: Collection) => void
   updateEnvironment: (env: Environment) => void
@@ -42,13 +39,8 @@ interface ProjectState {
 export const useProjectStore = create<ProjectState>((set) => ({
   project: null,
   activeCaseDirs: new Set<string>(),
-  casesByEndpoint: {},
   setProject: (project) => set({ project }),
   setActiveCaseDirs: (dirs) => set({ activeCaseDirs: new Set(dirs) }),
-  addActiveCasesDir: (dir) =>
-    set((s) => ({ activeCaseDirs: new Set([...s.activeCaseDirs, dir]) })),
-  setCasesForEndpoint: (endpointId, cases) =>
-    set((s) => ({ casesByEndpoint: { ...s.casesByEndpoint, [endpointId]: cases } })),
   updateCollection: (collection) =>
     set((state) => {
       if (!state.project) return state

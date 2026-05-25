@@ -27,11 +27,10 @@ export function CollectionTree(): JSX.Element {
   const openTab = useAppStore((s) => s.openTab)
   const closeTab = useAppStore((s) => s.closeTab)
   const activeCaseDirs = useProjectStore((s) => s.activeCaseDirs)
-  const casesByEndpoint = useProjectStore((s) => s.casesByEndpoint)
-  const setCasesForEndpoint = useProjectStore((s) => s.setCasesForEndpoint)
 
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
   const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(new Set())
+  const [casesByEndpoint, setCasesByEndpoint] = useState<Record<string, string[]>>({})
   const [modalState, setModalState] = useState<ModalState>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -127,7 +126,7 @@ export function CollectionTree(): JSX.Element {
     const casesAbsDir = path.join(project.projectDir, ep.casesDir)
     if (!expandedEndpoints.has(ep.id)) {
       const cases = await window.reqstraApi.listCases(casesAbsDir)
-      setCasesForEndpoint(ep.id, cases)
+      setCasesByEndpoint((prev) => ({ ...prev, [ep.id]: cases }))
     }
     setExpandedEndpoints((prev) => {
       const next = new Set(prev)
@@ -152,7 +151,10 @@ export function CollectionTree(): JSX.Element {
     const absolutePath = path.join(project.projectDir, ep.casesDir, caseName)
     try {
       await window.reqstraApi.deleteCase(absolutePath)
-      setCasesForEndpoint(ep.id, (casesByEndpoint[ep.id] ?? []).filter((c) => c !== caseName))
+      setCasesByEndpoint((prev) => ({
+        ...prev,
+        [ep.id]: (prev[ep.id] ?? []).filter((c) => c !== caseName),
+      }))
       closeTab(`${ep.id}::${caseName}`)
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e))
@@ -312,16 +314,14 @@ export function CollectionTree(): JSX.Element {
                       >
                         ✎
                       </button>
-                      {col.protocol !== 'grpc' && (
-                        <button
-                          type="button"
-                          onClick={() => handleEndpointDelete(col.id, ep.id)}
-                          title="エンドポイントを削除"
-                          className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
-                        >
-                          ×
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleEndpointDelete(col.id, ep.id)}
+                        title="エンドポイントを削除"
+                        className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                      >
+                        ×
+                      </button>
                     </div>
                   </div>
                   {expandedEndpoints.has(ep.id) &&
