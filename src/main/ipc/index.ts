@@ -1,6 +1,6 @@
 import { ipcMain, dialog } from 'electron'
 import * as path from 'path'
-import { readProject, saveProject, listCases, readCase, writeCase } from './project'
+import { readProject, saveProject, listCases, readCase, writeCase, deleteCase } from './project'
 import { writeLog, readLogs } from './log'
 import { registerGrpcHandlers } from './grpc'
 import type { ReqstraProject } from '../../shared/types/project'
@@ -46,6 +46,10 @@ export function registerAllHandlers(): void {
 
   ipcMain.handle('project:writeCase', async (_event, absolutePath: string, content: string) => {
     await writeCase(absolutePath, content)
+  })
+
+  ipcMain.handle('project:deleteCase', async (_event, absolutePath: string) => {
+    await deleteCase(absolutePath)
   })
 
   ipcMain.handle('log:write', async (_event, projectDir: string, entry: LogEntry) => {

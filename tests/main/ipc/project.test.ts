@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { promises as fs } from 'fs'
 import * as os from 'os'
 import * as path from 'path'
-import { readProject, saveProject, listCases, readCase, writeCase } from '../../../src/main/ipc/project'
+import { readProject, saveProject, listCases, readCase, writeCase, deleteCase } from '../../../src/main/ipc/project'
 import type { ReqstraProject } from '../../../src/shared/types/project'
 
 const tmpDir = () => fs.mkdtemp(path.join(os.tmpdir(), 'reqstra-test-'))
@@ -99,5 +99,24 @@ describe('listCases / readCase / writeCase', () => {
     const content = await readCase(filePath)
 
     expect(content).toBe('user_id: "alice"')
+  })
+})
+
+describe('deleteCase', () => {
+  it('YAMLファイルを削除する', async () => {
+    const dir = await tmpDir()
+    const filePath = path.join(dir, 'test.yaml')
+    await fs.writeFile(filePath, 'user_id: alice')
+
+    await deleteCase(filePath)
+
+    await expect(fs.access(filePath)).rejects.toThrow()
+  })
+
+  it('存在しないファイルはエラーをスローする', async () => {
+    const dir = await tmpDir()
+    const filePath = path.join(dir, 'nonexistent.yaml')
+
+    await expect(deleteCase(filePath)).rejects.toThrow()
   })
 })

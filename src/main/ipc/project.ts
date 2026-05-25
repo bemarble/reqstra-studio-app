@@ -34,3 +34,7 @@ export async function writeCase(absolutePath: string, content: string): Promise<
   await fs.mkdir(path.dirname(absolutePath), { recursive: true })
   await fs.writeFile(absolutePath, content, 'utf-8')
 }
+
+export async function deleteCase(absolutePath: string): Promise<void> {
+  await fs.unlink(absolutePath)
+}
