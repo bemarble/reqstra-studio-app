@@ -9,6 +9,7 @@ const api: IpcApi = {
   writeCase: (absolutePath, content) =>
     ipcRenderer.invoke('project:writeCase', absolutePath, content),
   deleteCase: (absolutePath) => ipcRenderer.invoke('project:deleteCase', absolutePath),
+  scanCaseDirs: (projectDir) => ipcRenderer.invoke('grpc:scanCaseDirs', projectDir),
   grpcReflect: (host, secure) => ipcRenderer.invoke('grpc:reflect', host, secure),
   grpcDescribeMethod: (host, secure, method) =>
     ipcRenderer.invoke('grpc:describeMethod', host, secure, method),
