@@ -14,6 +14,8 @@ interface Props {
 
 export function GrpcPanel({ tab }: Props): JSX.Element {
   const project = useProjectStore((s) => s.project)
+  const setCasesForEndpoint = useProjectStore((s) => s.setCasesForEndpoint)
+  const addActiveCasesDir = useProjectStore((s) => s.addActiveCasesDir)
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const replaceTab = useAppStore((s) => s.replaceTab)
@@ -94,6 +96,10 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
         endpointId: endpoint.id,
         caseName,
       })
+      const casesAbsDir = path.join(project.projectDir, endpoint.casesDir)
+      const updatedCases = await window.reqstraApi.listCases(casesAbsDir)
+      setCasesForEndpoint(endpoint.id, updatedCases)
+      addActiveCasesDir(endpoint.casesDir)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
     } finally {
