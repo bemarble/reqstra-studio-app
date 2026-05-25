@@ -20,6 +20,14 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  mainWindow.webContents.on('before-input-event', (_event, input) => {
+    if (input.type !== 'keyDown') return
+    const isDevToolsShortcut =
+      input.key === 'F12' ||
+      (input.meta && input.alt && input.key === 'i') // Cmd+Option+I
+    if (isDevToolsShortcut) mainWindow.webContents.toggleDevTools()
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
