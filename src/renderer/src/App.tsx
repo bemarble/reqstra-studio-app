@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { ActivityBar } from './components/ActivityBar'
 import { Sidebar } from './components/Sidebar'
 import { MainPanel } from './components/MainPanel'
+import { ResizablePanes } from './components/shared/ResizablePanes'
 import { useProjectStore } from './store/projectStore'
 
 export default function App(): JSX.Element {
@@ -38,8 +39,15 @@ export default function App(): JSX.Element {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-bg-primary)]">
       <ActivityBar />
-      <Sidebar />
-      <MainPanel />
+      <ResizablePanes
+        defaultLeftWidth={240}
+        minLeft={160}
+        minRight={400}
+        storageKey="pane-sidebar-width"
+      >
+        <Sidebar />
+        <MainPanel />
+      </ResizablePanes>
     </div>
   )
 }
