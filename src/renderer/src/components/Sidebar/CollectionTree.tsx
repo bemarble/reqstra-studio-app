@@ -146,6 +146,28 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
+  const handleCaseDuplicate = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
+    if (!project) return
+    const existing = casesByEndpoint[ep.id] ?? []
+    const base = caseName.replace(/\.ya?ml$/, '')
+    const ext = caseName.match(/\.ya?ml$/)?.[0] ?? '.yaml'
+    let newName = `${base}_copy${ext}`
+    let n = 2
+    while (existing.includes(newName)) {
+      newName = `${base}_copy_${n}${ext}`
+      n++
+    }
+    const srcPath = path.join(project.projectDir, ep.casesDir, caseName)
+    const dstPath = path.join(project.projectDir, ep.casesDir, newName)
+    try {
+      const content = await window.reqstraApi.readCase(srcPath)
+      await window.reqstraApi.writeCase(dstPath, content)
+      setCasesForEndpoint(ep.id, [...existing, newName])
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e))
+    }
+  }
+
   const handleCaseDelete = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
     if (!project) return
     if (!window.confirm(`"${caseName.replace(/\.ya?ml$/, '')}" を削除しますか？`)) return
@@ -337,14 +359,24 @@ export function CollectionTree(): JSX.Element {
                         >
                           {caseName.replace(/\.ya?ml$/, '')}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleCaseDelete(ep, caseName)}
-                          title="ケースを削除"
-                          className="shrink-0 rounded px-1 py-0.5 opacity-0 group-hover:opacity-100 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
-                        >
-                          ×
-                        </button>
+                        <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => void handleCaseDuplicate(ep, caseName)}
+                            title="ケースを複製"
+                            className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                          >
+                            ⎘
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleCaseDelete(ep, caseName)}
+                            title="ケースを削除"
+                            className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
                     ))}
                 </div>
