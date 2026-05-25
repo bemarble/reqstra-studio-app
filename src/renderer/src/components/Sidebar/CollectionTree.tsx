@@ -148,21 +148,21 @@ export function CollectionTree(): JSX.Element {
 
   const handleCaseDuplicate = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
     if (!project) return
-    const existing = casesByEndpoint[ep.id] ?? []
-    const base = caseName.replace(/\.ya?ml$/, '')
-    const ext = caseName.match(/\.ya?ml$/)?.[0] ?? '.yaml'
-    let newName = `${base}_copy${ext}`
-    let n = 2
-    while (existing.includes(newName)) {
-      newName = `${base}_copy_${n}${ext}`
-      n++
-    }
-    const srcPath = path.join(project.projectDir, ep.casesDir, caseName)
-    const dstPath = path.join(project.projectDir, ep.casesDir, newName)
+    const casesAbsDir = path.join(project.projectDir, ep.casesDir)
     try {
-      const content = await window.reqstraApi.readCase(srcPath)
-      await window.reqstraApi.writeCase(dstPath, content)
-      setCasesForEndpoint(ep.id, [...existing, newName])
+      // キャッシュではなくファイルシステムを参照して名前衝突を判定する
+      const freshCases = await window.reqstraApi.listCases(casesAbsDir)
+      const base = caseName.replace(/\.ya?ml$/, '')
+      const ext = caseName.match(/\.ya?ml$/)?.[0] ?? '.yaml'
+      let newName = `${base}_copy${ext}`
+      let n = 2
+      while (freshCases.includes(newName)) {
+        newName = `${base}_copy_${n}${ext}`
+        n++
+      }
+      const content = await window.reqstraApi.readCase(path.join(casesAbsDir, caseName))
+      await window.reqstraApi.writeCase(path.join(casesAbsDir, newName), content)
+      setCasesForEndpoint(ep.id, [...freshCases, newName])
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e))
     }
