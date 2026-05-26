@@ -70,7 +70,7 @@ export function ResizablePanes({
   return (
     <div
       ref={containerRef}
-      className={`${isHorizontal ? 'flex' : 'flex flex-col'} h-full overflow-hidden`}
+      className={`${isHorizontal ? 'flex' : 'flex flex-col'} h-full min-w-0 flex-1 overflow-hidden`}
     >
       <div style={firstStyle} className="flex flex-col overflow-hidden">
         {children[0]}
