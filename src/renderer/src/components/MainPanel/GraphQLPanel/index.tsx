@@ -118,13 +118,14 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
       updateEndpoint(collection.id, updatedEndpoint)
       const p = useProjectStore.getState().project
       if (!p) return
-      setSaveStatus('saving')
+      const label = collection.name
+      setSaveStatus('saving', label)
       window.reqstraApi
         .saveProject(p)
         .then(() => {
-          setSaveStatus('saved')
+          setSaveStatus('saved', label)
           if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-          savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
+          savedTimerRef.current = setTimeout(() => setSaveStatus('idle', null), 2000)
         })
         .catch(console.error)
     },
@@ -140,9 +141,18 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     (vars: string): void => {
       if (!project || !endpoint || tab.type !== 'case') return
       const filePath = path.join(project.projectDir, endpoint.casesDir, tab.caseName)
-      window.reqstraApi.writeCase(filePath, serializeCaseFile(vars)).catch(console.error)
+      const label = tab.caseName.replace(/\.ya?ml$/, '')
+      setSaveStatus('saving', label)
+      window.reqstraApi
+        .writeCase(filePath, serializeCaseFile(vars))
+        .then(() => {
+          setSaveStatus('saved', label)
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+          savedTimerRef.current = setTimeout(() => setSaveStatus('idle', null), 2000)
+        })
+        .catch(console.error)
     },
-    [project, endpoint, tab],
+    [project, endpoint, tab, setSaveStatus],
   )
 
   const handleQueryChange = (v: string): void => {
