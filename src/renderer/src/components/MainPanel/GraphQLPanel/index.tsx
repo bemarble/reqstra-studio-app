@@ -209,26 +209,34 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     }
 
     setIsLoading(true)
-    let result: GraphQLResponse
     try {
-      result = await window.reqstraApi.graphqlRequest(params)
+      const result = await window.reqstraApi.graphqlRequest(params)
+      setResponse(result)
+
+      const logEntry: LogEntry = {
+        timestamp: new Date().toISOString(),
+        protocol: 'graphql',
+        collectionName: collection.name,
+        endpointName: endpoint.name,
+        caseName: tab.type === 'case' ? tab.caseName : '(scratch)',
+        status: result.status,
+        durationMs: result.durationMs,
+        request: query,
+        response: result.data,
+      }
+      window.reqstraApi.writeLog(project.projectDir, logEntry).catch(console.error)
+    } catch (e) {
+      setResponse({
+        status: 'ERROR',
+        data: null,
+        errors: [],
+        httpStatus: 0,
+        durationMs: 0,
+        error: e instanceof Error ? e.message : String(e),
+      })
     } finally {
       setIsLoading(false)
     }
-    setResponse(result)
-
-    const logEntry: LogEntry = {
-      timestamp: new Date().toISOString(),
-      protocol: 'graphql',
-      collectionName: collection.name,
-      endpointName: endpoint.name,
-      caseName: tab.type === 'case' ? tab.caseName : '(scratch)',
-      status: result.status,
-      durationMs: result.durationMs,
-      request: query,
-      response: result.data,
-    }
-    window.reqstraApi.writeLog(project.projectDir, logEntry).catch(console.error)
   }
 
   const handleIntrospect = async (): Promise<void> => {
