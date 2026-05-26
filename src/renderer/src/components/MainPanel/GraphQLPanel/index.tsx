@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type JSX } from 'react'
+import { useState, useEffect, useCallback, useRef, type JSX } from 'react'
 import * as yaml from 'yaml'
 import { parse } from 'graphql'
 import { QueryEditor } from './QueryEditor'
@@ -22,12 +22,11 @@ interface Props {
 const DEFAULT_AUTH: GraphQLAuth = { type: 'none' }
 
 function serializeCaseFile(
-  query: string,
   variablesJson: string,
   headers: Record<string, string>,
   auth: GraphQLAuth,
 ): string {
-  const obj: Record<string, unknown> = { query }
+  const obj: Record<string, unknown> = {}
   if (variablesJson.trim()) {
     try {
       obj.variables = JSON.parse(variablesJson) as unknown
@@ -54,6 +53,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const project = useProjectStore((s) => s.project)
   const setCasesForEndpoint = useProjectStore((s) => s.setCasesForEndpoint)
   const addActiveCasesDir = useProjectStore((s) => s.addActiveCasesDir)
+  const updateEndpoint = useProjectStore((s) => s.updateEndpoint)
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const replaceTab = useAppStore((s) => s.replaceTab)
@@ -68,14 +68,16 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const queryError = getQueryError(query)
 
   const endpoint = project?.collections
-    .flatMap((c) => c.endpoints)
-    .find((ep) => ep.id === tab.endpointId) as GraphQLEndpoint | undefined
+    .flatMap((c) => c.endpoints as GraphQLEndpoint[])
+    .find((ep) => ep.id === tab.endpointId)
 
   const collection = project?.collections.find((c) =>
-    c.endpoints.some((ep) => ep.id === tab.endpointId),
+    (c.endpoints as GraphQLEndpoint[]).some((ep) => ep.id === tab.endpointId),
   )
 
   const activeEnv =
@@ -88,10 +90,16 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     ? `${activeTarget.url}${endpoint ? ` / ${endpoint.name}` : ''}`
     : '(ターゲット未設定)'
 
-  // ケースファイルを読み込んでフォームを初期化する
+  // エンドポイントが切り替わったときにクエリを読み込む
+  // endpoint.query の変更（自分のデバウンス保存）では再ロードしない
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setQuery(endpoint?.query ?? '')
+  }, [endpoint?.id])
+
+  // タブ（ケース）が切り替わったときに variables/headers/auth を読み込む
   useEffect(() => {
     if (!project || !endpoint || tab.type !== 'case') {
-      setQuery('')
       setVariablesJson('')
       setHeaders({})
       setAuth(DEFAULT_AUTH)
@@ -103,7 +111,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
       .then((raw) => {
         try {
           const parsed = yaml.parse(raw) as Record<string, unknown>
-          setQuery(typeof parsed.query === 'string' ? parsed.query : '')
           setVariablesJson(
             parsed.variables !== undefined
               ? JSON.stringify(parsed.variables, null, 2)
@@ -120,22 +127,34 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
               : DEFAULT_AUTH
           setAuth(a)
         } catch {
-          setQuery('')
           setVariablesJson('')
           setHeaders({})
           setAuth(DEFAULT_AUTH)
         }
       })
       .catch(() => {
-        setQuery('')
+        setVariablesJson('')
+        setHeaders({})
+        setAuth(DEFAULT_AUTH)
       })
-  }, [tab.id, project, endpoint])
+  }, [tab.id, project?.projectDir, endpoint?.id])
+
+  const saveQueryToEndpoint = useCallback(
+    (q: string): void => {
+      if (!endpoint || !collection) return
+      const updatedEndpoint: GraphQLEndpoint = { ...endpoint, query: q }
+      updateEndpoint(collection.id, updatedEndpoint)
+      const p = useProjectStore.getState().project
+      if (p) window.reqstraApi.saveProject(p).catch(console.error)
+    },
+    [endpoint, collection, updateEndpoint],
+  )
 
   const autoSave = useCallback(
-    (q: string, vars: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
+    (vars: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
       if (!project || !endpoint || tab.type !== 'case') return
       const filePath = path.join(project.projectDir, endpoint.casesDir, tab.caseName)
-      const content = serializeCaseFile(q, vars, hdrs, a)
+      const content = serializeCaseFile(vars, hdrs, a)
       window.reqstraApi.writeCase(filePath, content).catch(console.error)
     },
     [project, endpoint, tab],
@@ -143,19 +162,22 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
 
   const handleQueryChange = (v: string): void => {
     setQuery(v)
-    autoSave(v, variablesJson, headers, auth)
+    if (queryTimerRef.current) clearTimeout(queryTimerRef.current)
+    queryTimerRef.current = setTimeout(() => {
+      saveQueryToEndpoint(v)
+    }, 800)
   }
   const handleVariablesChange = (v: string): void => {
     setVariablesJson(v)
-    autoSave(query, v, headers, auth)
+    autoSave(v, headers, auth)
   }
   const handleHeadersChange = (v: Record<string, string>): void => {
     setHeaders(v)
-    autoSave(query, variablesJson, v, auth)
+    autoSave(variablesJson, v, auth)
   }
   const handleAuthChange = (v: GraphQLAuth): void => {
     setAuth(v)
-    autoSave(query, variablesJson, headers, v)
+    autoSave(variablesJson, headers, v)
   }
 
   const handleSave = async (): Promise<void> => {
@@ -169,7 +191,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     try {
       await window.reqstraApi.writeCase(
         filePath,
-        serializeCaseFile(query, variablesJson, headers, auth),
+        serializeCaseFile(variablesJson, headers, auth),
       )
       replaceTab(tab.id, {
         type: 'case',

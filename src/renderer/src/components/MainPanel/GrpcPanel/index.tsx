@@ -5,7 +5,7 @@ import { ResizablePanes } from '../../shared/ResizablePanes'
 import { useAppStore, type Tab } from '../../../store/appStore'
 import { useProjectStore } from '../../../store/projectStore'
 import type { GrpcResponse, GrpcRequestParams, LogEntry } from '../../../../../shared/types/ipc'
-import type { GrpcTarget } from '../../../../../shared/types/project'
+import type { GrpcTarget, GrpcEndpoint } from '../../../../../shared/types/project'
 import * as path from 'path'
 
 interface Props {
@@ -30,11 +30,11 @@ export function GrpcPanel({ tab }: Props): JSX.Element {
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const endpoint = project?.collections
-    .flatMap((c) => c.endpoints)
+    .flatMap((c) => c.endpoints as GrpcEndpoint[])
     .find((ep) => ep.id === tab.endpointId)
 
   const collection = project?.collections.find((c) =>
-    c.endpoints.some((ep) => ep.id === tab.endpointId),
+    (c.endpoints as GrpcEndpoint[]).some((ep) => ep.id === tab.endpointId),
   )
 
   const activeEnv =

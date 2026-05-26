@@ -40,6 +40,7 @@ export interface GraphQLEndpoint {
   id: string
   name: string      // 操作名 e.g. "GetUser"
   casesDir: string  // "requests/graphql/GetUser"
+  query?: string    // GraphQLクエリ文字列（コレクション単位で保持）
 }
 
 export interface Collection {

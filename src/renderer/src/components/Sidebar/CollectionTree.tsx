@@ -298,7 +298,15 @@ export function CollectionTree(): JSX.Element {
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-secondary)]"
-                onClick={() => void toggleCollection(col.id)}
+                onClick={() => {
+                  void toggleCollection(col.id)
+                  if (col.protocol === 'graphql') {
+                    const ep = col.endpoints[0]
+                    if (ep) {
+                      openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
+                    }
+                  }
+                }}
               >
                 <span className="mr-1.5 shrink-0 text-base leading-none">{expandedCollections.has(col.id) ? '▾' : '▸'}</span>
                 <span className="truncate font-medium">{col.name}</span>
