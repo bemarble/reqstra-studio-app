@@ -4,6 +4,7 @@ import { readProject, saveProject, listCases, readCase, writeCase, deleteCase } 
 import { writeLog, readLogs } from './log'
 import { registerGrpcHandlers } from './grpc'
 import { registerGraphQLHandlers } from './graphql'
+import { registerHttpHandlers } from './http'
 import type { ReqstraProject } from '../../shared/types/project'
 import type { LogEntry } from '../../shared/types/ipc'
 
@@ -63,4 +64,5 @@ export function registerAllHandlers(): void {
 
   registerGrpcHandlers()
   registerGraphQLHandlers()
+  registerHttpHandlers()
 }

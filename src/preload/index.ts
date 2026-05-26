@@ -17,6 +17,7 @@ const api: IpcApi = {
   graphqlRequest: (params) => ipcRenderer.invoke('graphql:request', params),
   graphqlIntrospect: (url, headers, auth) =>
     ipcRenderer.invoke('graphql:introspect', url, headers, auth),
+  httpRequest: (params) => ipcRenderer.invoke('http:request', params),
   writeLog: (projectDir, entry) => ipcRenderer.invoke('log:write', projectDir, entry),
   readLogs: (projectDir, date) => ipcRenderer.invoke('log:read', projectDir, date),
 }
