@@ -42,12 +42,9 @@ function getQueryError(query: string): string | null {
 
 export function GraphQLPanel({ tab }: Props): JSX.Element {
   const project = useProjectStore((s) => s.project)
-  const setCasesForEndpoint = useProjectStore((s) => s.setCasesForEndpoint)
-  const addActiveCasesDir = useProjectStore((s) => s.addActiveCasesDir)
   const updateEndpoint = useProjectStore((s) => s.updateEndpoint)
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
-  const replaceTab = useAppStore((s) => s.replaceTab)
   const setSaveStatus = useAppStore((s) => s.setSaveStatus)
 
   const [query, setQuery] = useState<string>('')
@@ -56,11 +53,9 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const [auth, setAuth] = useState<GraphQLAuth>(DEFAULT_AUTH)
   const [response, setResponse] = useState<GraphQLResponse | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [saveNameInput, setSaveNameInput] = useState<string>('')
-  const [isSaving, setIsSaving] = useState<boolean>(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const endpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const queryError = getQueryError(query)
 
@@ -83,7 +78,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     : '(ターゲット未設定)'
 
   // エンドポイントが切り替わったときに query/headers/auth を読み込む
-  // これらの値を自分で保存しても再ロードしないよう endpoint.id のみを依存にする
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setQuery(endpoint?.query ?? '')
@@ -116,8 +110,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
         setVariablesJson('')
       })
   }, [tab.id, project?.projectDir, endpoint?.id])
-
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const saveEndpointData = useCallback(
     (q: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
@@ -168,34 +160,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const handleAuthChange = (v: GraphQLAuth): void => {
     setAuth(v)
     scheduleEndpointSave(query, headers, v)
-  }
-
-  const handleSave = async (): Promise<void> => {
-    const rawName = saveNameInput.trim()
-    if (!rawName || !project || !endpoint) return
-    setSaveError(null)
-    const caseName = rawName.endsWith('.yaml') ? rawName : `${rawName}.yaml`
-    const filePath = path.join(project.projectDir, endpoint.casesDir, caseName)
-
-    setIsSaving(true)
-    try {
-      await window.reqstraApi.writeCase(filePath, serializeCaseFile(variablesJson))
-      replaceTab(tab.id, {
-        type: 'case',
-        id: `${endpoint.id}::${caseName}`,
-        label: `${endpoint.name} / ${rawName.replace(/\.ya?ml$/, '')}`,
-        endpointId: endpoint.id,
-        caseName,
-      })
-      const casesAbsDir = path.join(project.projectDir, endpoint.casesDir)
-      const updatedCases = await window.reqstraApi.listCases(casesAbsDir)
-      setCasesForEndpoint(endpoint.id, updatedCases)
-      addActiveCasesDir(endpoint.casesDir)
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setIsSaving(false)
-    }
   }
 
   const handleSend = async (): Promise<void> => {
@@ -290,34 +254,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
         <span className="flex-1 truncate text-xs text-[var(--color-text-secondary)]">
           {endpointLabel}
         </span>
-
-        {tab.type === 'scratch' && (
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              value={saveNameInput}
-              onChange={(e) => setSaveNameInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleSave()
-                if (e.key === 'Escape') setSaveNameInput('')
-              }}
-              placeholder="ケース名"
-              className="w-32 rounded border border-[var(--color-border)] bg-[#3c3c3c] px-2 py-0.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-text-accent)]"
-            />
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={!saveNameInput.trim() || isSaving}
-              className="rounded bg-[var(--color-bg-active)] px-2 py-0.5 text-xs text-white disabled:opacity-50"
-            >
-              {isSaving ? '保存中...' : '保存'}
-            </button>
-          </div>
-        )}
-        {tab.type === 'scratch' && saveError && (
-          <span className="text-xs text-[var(--color-error)]">{saveError}</span>
-        )}
-
         <button
           type="button"
           onClick={() => void handleIntrospect()}

@@ -7,6 +7,14 @@ import { EndpointModal } from '../modals/EndpointModal'
 import { GraphQLEndpointModal } from '../modals/GraphQLEndpointModal'
 import * as path from 'path'
 
+function getAvailableCaseName(existingCases: string[]): string {
+  const existing = new Set(existingCases)
+  if (!existing.has('default.yaml')) return 'default.yaml'
+  let n = 2
+  while (existing.has(`default${n}.yaml`)) n++
+  return `default${n}.yaml`
+}
+
 type ModalState =
   | { type: 'add-collection' }
   | { type: 'edit-collection'; collection: Collection }
@@ -317,17 +325,23 @@ export function CollectionTree(): JSX.Element {
                     type="button"
                     onClick={() => {
                       const ep = col.endpoints[0]
-                      if (!ep) return
-                      openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
-                      if (!expandedCollections.has(col.id) && project) {
-                        const casesAbsDir = path.join(project.projectDir, ep.casesDir)
-                        window.reqstraApi.listCases(casesAbsDir)
-                          .then((cases) => {
-                            setCasesForEndpoint(ep.id, cases)
-                            setExpandedCollections((prev) => new Set([...prev, col.id]))
-                          })
-                          .catch(console.error)
-                      }
+                      if (!ep || !project) return
+                      const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+                      void (async () => {
+                        const existingCases = await window.reqstraApi.listCases(casesAbsDir)
+                        const caseName = getAvailableCaseName(existingCases)
+                        await window.reqstraApi.writeCase(path.join(casesAbsDir, caseName), '')
+                        const updatedCases = await window.reqstraApi.listCases(casesAbsDir)
+                        setCasesForEndpoint(ep.id, updatedCases)
+                        setExpandedCollections((prev) => new Set([...prev, col.id]))
+                        openTab({
+                          type: 'case',
+                          id: `${ep.id}::${caseName}`,
+                          label: `${col.name} / ${caseName.replace(/\.yaml$/, '')}`,
+                          endpointId: ep.id,
+                          caseName,
+                        })
+                      })()
                     }}
                     title="ケースを作成"
                     className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
