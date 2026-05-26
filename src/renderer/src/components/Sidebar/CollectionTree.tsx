@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment, type JSX } from 'react'
+import React, { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint } from '../../../../shared/types/project'
