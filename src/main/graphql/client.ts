@@ -30,10 +30,16 @@ export function parseGraphQLCaseFile(raw: string): {
   }
 }
 
+const VALID_AUTH_TYPES = ['none', 'bearer', 'basic', 'oauth2'] as const
+
+function isValidAuthType(v: unknown): v is GraphQLAuth['type'] {
+  return VALID_AUTH_TYPES.includes(v as GraphQLAuth['type'])
+}
+
 function parseAuth(raw: unknown): GraphQLAuth {
   if (typeof raw !== 'object' || raw === null) return { type: 'none' }
   const a = raw as Record<string, unknown>
-  const type = (a.type as GraphQLAuth['type']) ?? 'none'
+  const type: GraphQLAuth['type'] = isValidAuthType(a.type) ? a.type : 'none'
   return {
     type,
     token: typeof a.token === 'string' ? a.token : undefined,
