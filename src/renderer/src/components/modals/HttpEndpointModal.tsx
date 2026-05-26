@@ -1,5 +1,5 @@
 import { useState, type JSX } from 'react'
-import type { Collection, HttpEndpoint, HttpMethod, HttpBodyType, Environment } from '../../../../shared/types/project'
+import type { Collection, HttpEndpoint, HttpMethod, HttpBodyType, HttpTarget, Environment } from '../../../../shared/types/project'
 
 interface Props {
   mode: 'add' | 'edit'
@@ -10,8 +10,8 @@ interface Props {
   isSubmitting?: boolean
 }
 
-function getTargets(environment: Environment | undefined): Array<{ id: string; name: string }> {
-  return (environment?.protocols.http as Array<{ id: string; name: string }> | undefined) ?? []
+function getTargets(environment: Environment | undefined): HttpTarget[] {
+  return environment?.protocols.http ?? []
 }
 
 export function HttpEndpointModal({
@@ -73,6 +73,7 @@ export function HttpEndpointModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
             placeholder="例: Create User"
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
