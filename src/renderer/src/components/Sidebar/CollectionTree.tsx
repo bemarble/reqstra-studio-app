@@ -236,7 +236,7 @@ export function CollectionTree(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-2 py-1">
         <span className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
           コレクション
@@ -248,7 +248,7 @@ export function CollectionTree(): JSX.Element {
               onClick={handleReflect}
               disabled={isReflecting || ((activeEnv?.protocols?.grpc as GrpcTarget[] | undefined) ?? []).length === 0}
               title="サーバーリフレクションでサービスを取得"
-              className="rounded bg-[#3c3c3c] px-1.5 py-0.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40"
+              className="rounded bg-[#3c3c3c] px-2 py-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40"
             >
               {isReflecting ? '取得中...' : '取得'}
             </button>
@@ -257,7 +257,7 @@ export function CollectionTree(): JSX.Element {
             type="button"
             onClick={() => setModalState({ type: 'add-collection' })}
             title="コレクションを追加"
-            className="rounded bg-[var(--color-bg-active)] px-1.5 py-0.5 text-xs text-white"
+            className="rounded bg-[var(--color-bg-active)] px-2 py-1 text-sm text-white"
           >
             ＋
           </button>
@@ -267,19 +267,19 @@ export function CollectionTree(): JSX.Element {
       {reflectError && <p className="px-2 pt-1 text-xs text-[var(--color-error)]">{reflectError}</p>}
       {saveError && <p className="px-2 pt-1 text-xs text-[var(--color-error)]">{saveError}</p>}
 
-      <div className="flex-1 overflow-y-auto py-1 text-xs">
+      <div className="min-h-0 flex-1 overflow-y-auto py-1 text-sm">
         {visibleCollections.length === 0 && (
           <p className="px-3 text-[var(--color-text-secondary)]">コレクションなし</p>
         )}
         {visibleCollections.map((col) => (
           <div key={col.id}>
-            <div className="group flex items-center px-2 py-0.5 hover:bg-[var(--color-bg-tertiary)]">
+            <div className="group flex items-center px-2 py-1 hover:bg-[var(--color-bg-tertiary)]">
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-secondary)]"
                 onClick={() => toggleCollection(col.id)}
               >
-                <span className="mr-1 shrink-0">{expandedCollections.has(col.id) ? '▾' : '▸'}</span>
+                <span className="mr-1.5 shrink-0 text-base leading-none">{expandedCollections.has(col.id) ? '▾' : '▸'}</span>
                 <span className="truncate font-medium">{col.name}</span>
               </button>
               <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
@@ -288,7 +288,7 @@ export function CollectionTree(): JSX.Element {
                     type="button"
                     onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
                     title="エンドポイントを追加"
-                    className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   >
                     ＋
                   </button>
@@ -297,7 +297,7 @@ export function CollectionTree(): JSX.Element {
                   type="button"
                   onClick={() => setModalState({ type: 'edit-collection', collection: col })}
                   title="コレクションを編集"
-                  className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 >
                   ✎
                 </button>
@@ -306,7 +306,7 @@ export function CollectionTree(): JSX.Element {
                     type="button"
                     onClick={() => handleCollectionDelete(col.id)}
                     title="コレクションを削除"
-                    className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                    className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
                   >
                     ×
                   </button>
@@ -318,7 +318,7 @@ export function CollectionTree(): JSX.Element {
                 .filter((ep) => isEndpointVisible(ep))
                 .map((ep) => (
                 <div key={ep.id}>
-                  <div className="group flex items-center py-0.5 pl-5 pr-2 hover:bg-[var(--color-bg-tertiary)]">
+                  <div className="group flex items-center py-1 pl-5 pr-2 hover:bg-[var(--color-bg-tertiary)]">
                     <button
                       type="button"
                       className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-primary)]"
@@ -334,7 +334,7 @@ export function CollectionTree(): JSX.Element {
                         })
                       }}
                     >
-                      <span className="mr-1 shrink-0">{expandedEndpoints.has(ep.id) ? '▾' : '▸'}</span>
+                      <span className="mr-1.5 shrink-0 text-base leading-none">{expandedEndpoints.has(ep.id) ? '▾' : '▸'}</span>
                       <span className="truncate">{ep.name}</span>
                     </button>
                     <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
@@ -344,7 +344,7 @@ export function CollectionTree(): JSX.Element {
                           setModalState({ type: 'edit-endpoint', collectionId: col.id, endpoint: ep })
                         }
                         title="エンドポイントを編集"
-                        className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                        className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       >
                         ✎
                       </button>
@@ -353,7 +353,7 @@ export function CollectionTree(): JSX.Element {
                           type="button"
                           onClick={() => handleEndpointDelete(col.id, ep.id)}
                           title="エンドポイントを削除"
-                          className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                          className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
                         >
                           ×
                         </button>
@@ -364,7 +364,7 @@ export function CollectionTree(): JSX.Element {
                     (casesByEndpoint[ep.id] ?? []).map((caseName) => (
                       <Fragment key={caseName}>
                         <div
-                          className="group flex items-center py-0.5 pl-10 pr-2 hover:bg-[var(--color-bg-tertiary)]"
+                          className="group flex items-center py-1 pl-10 pr-2 hover:bg-[var(--color-bg-tertiary)]"
                         >
                           <button
                             type="button"
@@ -378,7 +378,7 @@ export function CollectionTree(): JSX.Element {
                               type="button"
                               onClick={() => handleCaseDuplicate(ep, caseName)}
                               title="ケースを複製"
-                              className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                              className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                             >
                               ⎘
                             </button>
@@ -386,7 +386,7 @@ export function CollectionTree(): JSX.Element {
                               type="button"
                               onClick={() => void handleCaseDelete(ep, caseName)}
                               title="ケースを削除"
-                              className="rounded px-1 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                              className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
                             >
                               ×
                             </button>
@@ -394,7 +394,7 @@ export function CollectionTree(): JSX.Element {
                         </div>
                         {pendingDuplicate?.endpointId === ep.id &&
                           pendingDuplicate.sourceName === caseName && (
-                            <div className="flex items-center py-0.5 pl-10 pr-2">
+                            <div className="flex items-center py-1 pl-10 pr-2">
                               <input
                                 type="text"
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -408,7 +408,7 @@ export function CollectionTree(): JSX.Element {
                                   if (e.key === 'Escape') setPendingDuplicate(null)
                                 }}
                                 onBlur={() => setPendingDuplicate(null)}
-                                className="w-full rounded border border-[var(--color-text-accent)] bg-[#3c3c3c] px-1.5 py-0.5 text-xs text-[var(--color-text-primary)] outline-none"
+                                className="w-full rounded border border-[var(--color-text-accent)] bg-[#3c3c3c] px-1.5 py-0.5 text-sm text-[var(--color-text-primary)] outline-none"
                               />
                             </div>
                           )}

@@ -83,7 +83,7 @@ export function EnvironmentSelector(): JSX.Element {
         <select
           value={active?.id ?? ''}
           onChange={(e) => setActiveEnvironmentId(e.target.value)}
-          className="min-w-0 flex-1 rounded bg-[#3c3c3c] px-2 py-1 text-xs text-[var(--color-text-primary)] outline-none"
+          className="min-w-0 flex-1 rounded bg-[#3c3c3c] px-2 py-1 text-sm text-[var(--color-text-primary)] outline-none"
         >
           {environments.map((env) => (
             <option key={env.id} value={env.id}>
@@ -97,7 +97,7 @@ export function EnvironmentSelector(): JSX.Element {
             type="button"
             onClick={() => setModal({ type: 'edit', env: active })}
             title="環境を編集"
-            className="shrink-0 rounded bg-[#3c3c3c] px-1.5 py-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+            className="shrink-0 rounded bg-[#3c3c3c] px-1.5 py-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             ✎
           </button>
@@ -106,7 +106,7 @@ export function EnvironmentSelector(): JSX.Element {
           type="button"
           onClick={() => setModal({ type: 'add' })}
           title="環境を追加"
-          className="shrink-0 rounded bg-[var(--color-bg-active)] px-1.5 py-1 text-xs text-white"
+          className="shrink-0 rounded bg-[var(--color-bg-active)] px-1.5 py-1 text-sm text-white"
         >
           ＋
         </button>
