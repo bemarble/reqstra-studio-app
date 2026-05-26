@@ -84,7 +84,7 @@ export function ProtocolTargetSelector(): JSX.Element {
         <select
           value={active?.id ?? ''}
           onChange={(e) => setActiveProtocolTargetId(e.target.value)}
-          className="min-w-0 flex-1 rounded bg-[#3c3c3c] px-2 py-1 text-xs text-[var(--color-text-primary)] outline-none"
+          className="min-w-0 flex-1 rounded bg-[#3c3c3c] px-2 py-1 text-sm text-[var(--color-text-primary)] outline-none"
         >
           {targets.map((t) => (
             <option key={t.id} value={t.id}>
@@ -103,7 +103,7 @@ export function ProtocolTargetSelector(): JSX.Element {
               if (fullTarget) setModal({ type: 'edit', target: fullTarget })
             }}
             title="ターゲットを編集"
-            className="shrink-0 rounded bg-[#3c3c3c] px-1.5 py-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+            className="shrink-0 rounded bg-[#3c3c3c] px-1.5 py-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             ✎
           </button>
@@ -112,7 +112,7 @@ export function ProtocolTargetSelector(): JSX.Element {
           type="button"
           onClick={() => setModal({ type: 'add' })}
           title="ターゲットを追加"
-          className="shrink-0 rounded bg-[var(--color-bg-active)] px-1.5 py-1 text-xs text-white"
+          className="shrink-0 rounded bg-[var(--color-bg-active)] px-1.5 py-1 text-sm text-white"
         >
           ＋
         </button>
