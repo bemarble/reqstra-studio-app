@@ -1,16 +1,17 @@
 import { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
-import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
+import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint } from '../../../../shared/types/project'
 import { CollectionModal } from '../modals/CollectionModal'
 import { EndpointModal } from '../modals/EndpointModal'
+import { GraphQLEndpointModal } from '../modals/GraphQLEndpointModal'
 import * as path from 'path'
 
 type ModalState =
   | { type: 'add-collection' }
   | { type: 'edit-collection'; collection: Collection }
   | { type: 'add-endpoint'; collectionId: string }
-  | { type: 'edit-endpoint'; collectionId: string; endpoint: GrpcEndpoint }
+  | { type: 'edit-endpoint'; collectionId: string; endpoint: GrpcEndpoint | GraphQLEndpoint }
   | null
 
 export function CollectionTree(): JSX.Element {
@@ -52,7 +53,7 @@ export function CollectionTree(): JSX.Element {
     (c) => c.protocol === activeProtocol && c.protocolTargetId === activeProtocolTargetId,
   )
 
-  const isEndpointVisible = (ep: GrpcEndpoint): boolean =>
+  const isEndpointVisible = (ep: GrpcEndpoint | GraphQLEndpoint): boolean =>
     activeProtocol !== 'grpc' || isReflected || activeCaseDirs.has(ep.casesDir)
 
   const visibleCollections = collections.filter((col) =>
@@ -127,7 +128,7 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const toggleEndpoint = async (ep: GrpcEndpoint): Promise<void> => {
+  const toggleEndpoint = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     if (!project) return
     const casesAbsDir = path.join(project.projectDir, ep.casesDir)
     if (!expandedEndpoints.has(ep.id)) {
@@ -141,7 +142,7 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const handleCaseClick = (_col: Collection, ep: GrpcEndpoint, caseName: string): void => {
+  const handleCaseClick = (_col: Collection, ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): void => {
     openTab({
       type: 'case',
       id: `${ep.id}::${caseName}`,
@@ -151,12 +152,12 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const handleCaseDuplicate = (ep: GrpcEndpoint, caseName: string): void => {
+  const handleCaseDuplicate = (ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): void => {
     const base = caseName.replace(/\.ya?ml$/, '')
     setPendingDuplicate({ endpointId: ep.id, sourceName: caseName, inputValue: `${base}_copy` })
   }
 
-  const handleCaseDuplicateConfirm = async (ep: GrpcEndpoint): Promise<void> => {
+  const handleCaseDuplicateConfirm = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     if (!project || !pendingDuplicate) return
     const rawName = pendingDuplicate.inputValue.trim()
     const sourceName = pendingDuplicate.sourceName
@@ -182,7 +183,7 @@ export function CollectionTree(): JSX.Element {
     }
   }
 
-  const handleCaseDelete = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
+  const handleCaseDelete = async (ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): Promise<void> => {
     if (!project) return
     if (!window.confirm(`"${caseName.replace(/\.ya?ml$/, '')}" を削除しますか？`)) return
     const absolutePath = path.join(project.projectDir, ep.casesDir, caseName)
@@ -215,7 +216,7 @@ export function CollectionTree(): JSX.Element {
     if (await persistProject()) return
   }
 
-  const handleEndpointSubmit = async (ep: GrpcEndpoint): Promise<void> => {
+  const handleEndpointSubmit = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     setIsSubmitting(true)
     try {
       if (modalState?.type === 'add-endpoint') {
@@ -439,7 +440,15 @@ export function CollectionTree(): JSX.Element {
           onClose={() => setModalState(null)}
         />
       )}
-      {modalState?.type === 'add-endpoint' && (
+      {modalState?.type === 'add-endpoint' && activeProtocol === 'graphql' && (
+        <GraphQLEndpointModal
+          mode="add"
+          isSubmitting={isSubmitting}
+          onSubmit={handleEndpointSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'add-endpoint' && activeProtocol !== 'graphql' && (
         <EndpointModal
           mode="add"
           protocol={activeProtocol}
@@ -448,11 +457,20 @@ export function CollectionTree(): JSX.Element {
           onClose={() => setModalState(null)}
         />
       )}
-      {modalState?.type === 'edit-endpoint' && (
+      {modalState?.type === 'edit-endpoint' && activeProtocol === 'graphql' && (
+        <GraphQLEndpointModal
+          mode="edit"
+          initial={modalState.endpoint as GraphQLEndpoint}
+          isSubmitting={isSubmitting}
+          onSubmit={handleEndpointSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'edit-endpoint' && activeProtocol !== 'graphql' && (
         <EndpointModal
           mode="edit"
           protocol={activeProtocol}
-          initial={modalState.endpoint}
+          initial={modalState.endpoint as GrpcEndpoint}
           isSubmitting={isSubmitting}
           onSubmit={handleEndpointSubmit}
           onClose={() => setModalState(null)}
