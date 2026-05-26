@@ -23,16 +23,16 @@ const DEFAULT_AUTH: GraphQLAuth = { type: 'none' }
 
 function serializeCaseFile(
   query: string,
-  variablesYaml: string,
+  variablesJson: string,
   headers: Record<string, string>,
   auth: GraphQLAuth,
 ): string {
   const obj: Record<string, unknown> = { query }
-  if (variablesYaml.trim()) {
+  if (variablesJson.trim()) {
     try {
-      obj.variables = yaml.parse(variablesYaml) as unknown
+      obj.variables = JSON.parse(variablesJson) as unknown
     } catch {
-      // 不正YAMLは保存しない
+      // 不正JSONは保存しない
     }
   }
   if (auth.type !== 'none') obj.auth = auth
@@ -59,7 +59,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const replaceTab = useAppStore((s) => s.replaceTab)
 
   const [query, setQuery] = useState<string>('')
-  const [variablesYaml, setVariablesYaml] = useState<string>('')
+  const [variablesJson, setVariablesJson] = useState<string>('')
   const [headers, setHeaders] = useState<Record<string, string>>({})
   const [auth, setAuth] = useState<GraphQLAuth>(DEFAULT_AUTH)
   const [response, setResponse] = useState<GraphQLResponse | null>(null)
@@ -92,7 +92,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   useEffect(() => {
     if (!project || !endpoint || tab.type !== 'case') {
       setQuery('')
-      setVariablesYaml('')
+      setVariablesJson('')
       setHeaders({})
       setAuth(DEFAULT_AUTH)
       return
@@ -104,8 +104,10 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
         try {
           const parsed = yaml.parse(raw) as Record<string, unknown>
           setQuery(typeof parsed.query === 'string' ? parsed.query : '')
-          setVariablesYaml(
-            parsed.variables !== undefined ? yaml.stringify(parsed.variables) : '',
+          setVariablesJson(
+            parsed.variables !== undefined
+              ? JSON.stringify(parsed.variables, null, 2)
+              : '',
           )
           const h =
             typeof parsed.headers === 'object' && parsed.headers !== null
@@ -119,7 +121,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
           setAuth(a)
         } catch {
           setQuery('')
-          setVariablesYaml('')
+          setVariablesJson('')
           setHeaders({})
           setAuth(DEFAULT_AUTH)
         }
@@ -141,19 +143,19 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
 
   const handleQueryChange = (v: string): void => {
     setQuery(v)
-    autoSave(v, variablesYaml, headers, auth)
+    autoSave(v, variablesJson, headers, auth)
   }
   const handleVariablesChange = (v: string): void => {
-    setVariablesYaml(v)
+    setVariablesJson(v)
     autoSave(query, v, headers, auth)
   }
   const handleHeadersChange = (v: Record<string, string>): void => {
     setHeaders(v)
-    autoSave(query, variablesYaml, v, auth)
+    autoSave(query, variablesJson, v, auth)
   }
   const handleAuthChange = (v: GraphQLAuth): void => {
     setAuth(v)
-    autoSave(query, variablesYaml, headers, v)
+    autoSave(query, variablesJson, headers, v)
   }
 
   const handleSave = async (): Promise<void> => {
@@ -167,7 +169,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     try {
       await window.reqstraApi.writeCase(
         filePath,
-        serializeCaseFile(query, variablesYaml, headers, auth),
+        serializeCaseFile(query, variablesJson, headers, auth),
       )
       replaceTab(tab.id, {
         type: 'case',
@@ -203,7 +205,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     const params: GraphQLRequestParams = {
       url: activeTarget.url,
       query,
-      variables: variablesYaml,
+      variables: variablesJson,
       headers,
       auth,
     }
@@ -335,7 +337,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
         >
           <QueryEditor
             query={query}
-            variablesYaml={variablesYaml}
+            variablesJson={variablesJson}
             headers={headers}
             auth={auth}
             queryError={queryError}

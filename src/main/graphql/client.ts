@@ -76,7 +76,7 @@ export async function executeGraphQLRequest(
   let parsedVariables: Record<string, unknown> = {}
   if (params.variables.trim()) {
     try {
-      parsedVariables = (yaml.parse(params.variables) as Record<string, unknown>) ?? {}
+      parsedVariables = JSON.parse(params.variables) as Record<string, unknown>
     } catch (e) {
       return {
         status: 'ERROR',
@@ -84,7 +84,7 @@ export async function executeGraphQLRequest(
         errors: [],
         httpStatus: 0,
         durationMs: Date.now() - start,
-        error: `変数のYAMLパースエラー: ${e instanceof Error ? e.message : String(e)}`,
+        error: `変数のJSONパースエラー: ${e instanceof Error ? e.message : String(e)}`,
       }
     }
   }
