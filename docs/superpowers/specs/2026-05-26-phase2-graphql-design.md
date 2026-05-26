@@ -205,6 +205,19 @@ src/renderer/src/components/
 | Basic Auth | Username / Password | `Basic <base64(user:pass)>` |
 | OAuth2 | Access Token | `Bearer <accessToken>` |
 
+### Pretty ボタン
+
+クエリエディタのツールバーに「Pretty」ボタンを設置。クリックすると `graphql` パッケージの `parse` + `print` でクエリを整形する。整形処理は Renderer 側で完結（IPC 不要）。パースエラー時はボタンを無効化または無視。
+
+### クエリバリデーション
+
+クエリ入力のたびに `graphql` パッケージの `parse` でシンタックスチェックを行う（Renderer 側で完結）。
+
+- パースエラーがある場合：Send ボタンを無効化し、エディタ下部にエラーメッセージを表示
+- エラーがない場合：Send ボタンを有効化
+
+スキーマを取得していない段階ではシンタックスチェックのみ（フィールドの存在チェック等のセマンティクス検証は行わない）。
+
 ### CollectionTree 変更点
 
 - `activeProtocol === 'graphql'` の場合、gRPC の「取得（Reflect）」ボタンを非表示にし、「＋エンドポイント」ボタンを表示

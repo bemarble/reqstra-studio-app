@@ -200,7 +200,16 @@ export function CollectionTree(): JSX.Element {
     setIsSubmitting(true)
     try {
       if (modalState?.type === 'add-collection') {
-        addCollection(col)
+        if (col.protocol === 'graphql') {
+          const autoEndpoint: GraphQLEndpoint = {
+            id: crypto.randomUUID(),
+            name: col.name,
+            casesDir: `requests/graphql/${col.name}`,
+          }
+          addCollection({ ...col, endpoints: [autoEndpoint] })
+        } else {
+          addCollection(col)
+        }
       } else {
         updateCollection(col)
       }
@@ -284,7 +293,22 @@ export function CollectionTree(): JSX.Element {
                 <span className="truncate font-medium">{col.name}</span>
               </button>
               <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                {col.protocol !== 'grpc' && (
+                {col.protocol === 'graphql' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ep = col.endpoints[0]
+                      if (ep) {
+                        openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
+                      }
+                    }}
+                    title="クエリを開く"
+                    className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  >
+                    ＋
+                  </button>
+                )}
+                {col.protocol !== 'grpc' && col.protocol !== 'graphql' && (
                   <button
                     type="button"
                     onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
