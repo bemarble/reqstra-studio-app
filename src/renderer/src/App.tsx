@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { ActivityBar } from './components/ActivityBar'
 import { Sidebar } from './components/Sidebar'
 import { MainPanel } from './components/MainPanel'
+import { StatusBar } from './components/StatusBar'
 import { ResizablePanes } from './components/shared/ResizablePanes'
 import { useProjectStore } from './store/projectStore'
 
@@ -61,6 +62,7 @@ export default function App(): JSX.Element {
           <MainPanel />
         </ResizablePanes>
       </div>
+      <StatusBar />
     </div>
   )
 }

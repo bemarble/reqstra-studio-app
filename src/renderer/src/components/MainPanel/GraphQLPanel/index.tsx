@@ -48,6 +48,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const activeEnvironmentId = useAppStore((s) => s.activeEnvironmentId)
   const activeProtocolTargetId = useAppStore((s) => s.activeProtocolTargetId)
   const replaceTab = useAppStore((s) => s.replaceTab)
+  const setSaveStatus = useAppStore((s) => s.setSaveStatus)
 
   const [query, setQuery] = useState<string>('')
   const [variablesJson, setVariablesJson] = useState<string>('')
@@ -116,15 +117,26 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
       })
   }, [tab.id, project?.projectDir, endpoint?.id])
 
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const saveEndpointData = useCallback(
     (q: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
       if (!endpoint || !collection) return
       const updatedEndpoint: GraphQLEndpoint = { ...endpoint, query: q, headers: hdrs, auth: a }
       updateEndpoint(collection.id, updatedEndpoint)
       const p = useProjectStore.getState().project
-      if (p) window.reqstraApi.saveProject(p).catch(console.error)
+      if (!p) return
+      setSaveStatus('saving')
+      window.reqstraApi
+        .saveProject(p)
+        .then(() => {
+          setSaveStatus('saved')
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+          savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
+        })
+        .catch(console.error)
     },
-    [endpoint, collection, updateEndpoint],
+    [endpoint, collection, updateEndpoint, setSaveStatus],
   )
 
   const scheduleEndpointSave = (q: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
