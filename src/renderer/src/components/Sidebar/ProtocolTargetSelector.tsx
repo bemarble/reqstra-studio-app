@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import React, { useState, useEffect, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
 import type { GrpcTarget, HttpTarget, GraphQLTarget } from '../../../../shared/types/project'
@@ -32,6 +32,13 @@ export function ProtocolTargetSelector(): JSX.Element {
   const active = targets.find((t) => t.id === activeProtocolTargetId) ?? targets[0]
 
   const activeEnvId = env?.id ?? ''
+
+  // 表示中のターゲット（フォールバック含む）とストア値が乖離しているとき同期する
+  useEffect(() => {
+    if (active && active.id !== activeProtocolTargetId) {
+      setActiveProtocolTargetId(active.id)
+    }
+  }, [active?.id])
 
   const persistProject = async (): Promise<boolean> => {
     const p = useProjectStore.getState().project
