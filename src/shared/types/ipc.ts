@@ -1,4 +1,6 @@
-import type { ReqstraProject } from './project'
+import type { ReqstraProject, GraphQLAuth, GraphQLAuthType } from './project'
+
+export type { GraphQLAuth, GraphQLAuthType }
 
 export interface GrpcServiceInfo {
   name: string
@@ -32,15 +34,6 @@ export interface LogEntry {
   durationMs: number
   request: unknown
   response: unknown
-}
-
-export type GraphQLAuthType = 'none' | 'bearer' | 'basic' | 'oauth2'
-
-export interface GraphQLAuth {
-  type: GraphQLAuthType
-  token?: string     // bearer / oauth2
-  username?: string  // basic
-  password?: string  // basic
 }
 
 export interface GraphQLRequestParams {

@@ -9,10 +9,9 @@ import { useProjectStore } from '../../../store/projectStore'
 import type {
   GraphQLResponse,
   GraphQLRequestParams,
-  GraphQLAuth,
   LogEntry,
 } from '../../../../../shared/types/ipc'
-import type { GraphQLTarget, GraphQLEndpoint } from '../../../../../shared/types/project'
+import type { GraphQLTarget, GraphQLEndpoint, GraphQLAuth } from '../../../../../shared/types/project'
 import * as path from 'path'
 
 interface Props {
@@ -21,22 +20,14 @@ interface Props {
 
 const DEFAULT_AUTH: GraphQLAuth = { type: 'none' }
 
-function serializeCaseFile(
-  variablesJson: string,
-  headers: Record<string, string>,
-  auth: GraphQLAuth,
-): string {
-  const obj: Record<string, unknown> = {}
-  if (variablesJson.trim()) {
-    try {
-      obj.variables = JSON.parse(variablesJson) as unknown
-    } catch {
-      // 不正JSONは保存しない
-    }
+function serializeCaseFile(variablesJson: string): string {
+  if (!variablesJson.trim()) return yaml.stringify({})
+  try {
+    const variables = JSON.parse(variablesJson) as unknown
+    return yaml.stringify({ variables })
+  } catch {
+    return yaml.stringify({})
   }
-  if (auth.type !== 'none') obj.auth = auth
-  if (Object.keys(headers).length > 0) obj.headers = headers
-  return yaml.stringify(obj)
 }
 
 function getQueryError(query: string): string | null {
@@ -68,7 +59,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const endpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const queryError = getQueryError(query)
 
@@ -90,19 +81,19 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     ? `${activeTarget.url}${endpoint ? ` / ${endpoint.name}` : ''}`
     : '(ターゲット未設定)'
 
-  // エンドポイントが切り替わったときにクエリを読み込む
-  // endpoint.query の変更（自分のデバウンス保存）では再ロードしない
+  // エンドポイントが切り替わったときに query/headers/auth を読み込む
+  // これらの値を自分で保存しても再ロードしないよう endpoint.id のみを依存にする
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setQuery(endpoint?.query ?? '')
+    setHeaders(endpoint?.headers ?? {})
+    setAuth(endpoint?.auth ?? DEFAULT_AUTH)
   }, [endpoint?.id])
 
-  // タブ（ケース）が切り替わったときに variables/headers/auth を読み込む
+  // タブ（ケース）が切り替わったときに variables を読み込む
   useEffect(() => {
     if (!project || !endpoint || tab.type !== 'case') {
       setVariablesJson('')
-      setHeaders({})
-      setAuth(DEFAULT_AUTH)
       return
     }
     const filePath = path.join(project.projectDir, endpoint.casesDir, tab.caseName)
@@ -116,33 +107,19 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
               ? JSON.stringify(parsed.variables, null, 2)
               : '',
           )
-          const h =
-            typeof parsed.headers === 'object' && parsed.headers !== null
-              ? (parsed.headers as Record<string, string>)
-              : {}
-          setHeaders(h)
-          const a =
-            typeof parsed.auth === 'object' && parsed.auth !== null
-              ? (parsed.auth as GraphQLAuth)
-              : DEFAULT_AUTH
-          setAuth(a)
         } catch {
           setVariablesJson('')
-          setHeaders({})
-          setAuth(DEFAULT_AUTH)
         }
       })
       .catch(() => {
         setVariablesJson('')
-        setHeaders({})
-        setAuth(DEFAULT_AUTH)
       })
   }, [tab.id, project?.projectDir, endpoint?.id])
 
-  const saveQueryToEndpoint = useCallback(
-    (q: string): void => {
+  const saveEndpointData = useCallback(
+    (q: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
       if (!endpoint || !collection) return
-      const updatedEndpoint: GraphQLEndpoint = { ...endpoint, query: q }
+      const updatedEndpoint: GraphQLEndpoint = { ...endpoint, query: q, headers: hdrs, auth: a }
       updateEndpoint(collection.id, updatedEndpoint)
       const p = useProjectStore.getState().project
       if (p) window.reqstraApi.saveProject(p).catch(console.error)
@@ -150,34 +127,35 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     [endpoint, collection, updateEndpoint],
   )
 
-  const autoSave = useCallback(
-    (vars: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
+  const scheduleEndpointSave = (q: string, hdrs: Record<string, string>, a: GraphQLAuth): void => {
+    if (endpointTimerRef.current) clearTimeout(endpointTimerRef.current)
+    endpointTimerRef.current = setTimeout(() => saveEndpointData(q, hdrs, a), 800)
+  }
+
+  const autoSaveCase = useCallback(
+    (vars: string): void => {
       if (!project || !endpoint || tab.type !== 'case') return
       const filePath = path.join(project.projectDir, endpoint.casesDir, tab.caseName)
-      const content = serializeCaseFile(vars, hdrs, a)
-      window.reqstraApi.writeCase(filePath, content).catch(console.error)
+      window.reqstraApi.writeCase(filePath, serializeCaseFile(vars)).catch(console.error)
     },
     [project, endpoint, tab],
   )
 
   const handleQueryChange = (v: string): void => {
     setQuery(v)
-    if (queryTimerRef.current) clearTimeout(queryTimerRef.current)
-    queryTimerRef.current = setTimeout(() => {
-      saveQueryToEndpoint(v)
-    }, 800)
+    scheduleEndpointSave(v, headers, auth)
   }
   const handleVariablesChange = (v: string): void => {
     setVariablesJson(v)
-    autoSave(v, headers, auth)
+    autoSaveCase(v)
   }
   const handleHeadersChange = (v: Record<string, string>): void => {
     setHeaders(v)
-    autoSave(variablesJson, v, auth)
+    scheduleEndpointSave(query, v, auth)
   }
   const handleAuthChange = (v: GraphQLAuth): void => {
     setAuth(v)
-    autoSave(variablesJson, headers, v)
+    scheduleEndpointSave(query, headers, v)
   }
 
   const handleSave = async (): Promise<void> => {
@@ -189,10 +167,7 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
 
     setIsSaving(true)
     try {
-      await window.reqstraApi.writeCase(
-        filePath,
-        serializeCaseFile(variablesJson, headers, auth),
-      )
+      await window.reqstraApi.writeCase(filePath, serializeCaseFile(variablesJson))
       replaceTab(tab.id, {
         type: 'case',
         id: `${endpoint.id}::${caseName}`,

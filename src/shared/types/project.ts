@@ -1,3 +1,12 @@
+export type GraphQLAuthType = 'none' | 'bearer' | 'basic' | 'oauth2'
+
+export interface GraphQLAuth {
+  type: GraphQLAuthType
+  token?: string     // bearer / oauth2
+  username?: string  // basic
+  password?: string  // basic
+}
+
 export interface GrpcTarget {
   id: string
   name: string
@@ -41,6 +50,8 @@ export interface GraphQLEndpoint {
   name: string      // 操作名 e.g. "GetUser"
   casesDir: string  // "requests/graphql/GetUser"
   query?: string    // GraphQLクエリ文字列（コレクション単位で保持）
+  headers?: Record<string, string>
+  auth?: GraphQLAuth
 }
 
 export interface Collection {

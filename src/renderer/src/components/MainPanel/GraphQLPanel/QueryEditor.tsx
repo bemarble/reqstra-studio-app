@@ -3,7 +3,7 @@ import { parse, print } from 'graphql'
 import { MonacoEditor } from '../../shared/MonacoEditor'
 import { MetadataEditor } from '../GrpcPanel/MetadataEditor'
 import { ResizablePanes } from '../../shared/ResizablePanes'
-import type { GraphQLAuth } from '../../../../../shared/types/ipc'
+import type { GraphQLAuth } from '../../../../../shared/types/project'
 
 type BottomTab = 'variables' | 'headers' | 'auth'
 
