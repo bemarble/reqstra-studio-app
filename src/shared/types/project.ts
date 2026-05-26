@@ -26,6 +26,20 @@ export interface HttpTarget {
   baseUrl: string
 }
 
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+export type HttpBodyType = 'json' | 'query'
+
+export interface HttpEndpoint {
+  id: string
+  name: string
+  method: HttpMethod
+  path: string
+  bodyType: HttpBodyType
+  casesDir: string
+  headers?: Record<string, string>
+  auth?: GraphQLAuth
+}
+
 export interface EnvironmentProtocols {
   grpc?: GrpcTarget[]
   graphql?: GraphQLTarget[]
@@ -59,7 +73,7 @@ export interface Collection {
   protocol: 'grpc' | 'graphql' | 'http'
   name: string
   protocolTargetId: string
-  endpoints: GrpcEndpoint[] | GraphQLEndpoint[]
+  endpoints: GrpcEndpoint[] | GraphQLEndpoint[] | HttpEndpoint[]
 }
 
 export interface ReqstraProject {
