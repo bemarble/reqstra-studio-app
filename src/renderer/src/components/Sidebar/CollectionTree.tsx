@@ -317,11 +317,19 @@ export function CollectionTree(): JSX.Element {
                     type="button"
                     onClick={() => {
                       const ep = col.endpoints[0]
-                      if (ep) {
-                        openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
+                      if (!ep) return
+                      openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
+                      if (!expandedCollections.has(col.id) && project) {
+                        const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+                        window.reqstraApi.listCases(casesAbsDir)
+                          .then((cases) => {
+                            setCasesForEndpoint(ep.id, cases)
+                            setExpandedCollections((prev) => new Set([...prev, col.id]))
+                          })
+                          .catch(console.error)
                       }
                     }}
-                    title="クエリを開く"
+                    title="ケースを作成"
                     className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   >
                     ＋
