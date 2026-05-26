@@ -21,7 +21,7 @@ export function ProtocolTargetModal({ mode, protocol, initial, onSubmit, onDelet
   const [name, setName] = useState<string>(initial?.name ?? '')
   const [host, setHost] = useState<string>(() => {
     if (protocol === 'grpc') return (initial as GrpcTarget | undefined)?.host ?? ''
-    if (protocol === 'graphql') return (initial as GraphQLTarget | undefined)?.host ?? ''
+    if (protocol === 'graphql') return (initial as GraphQLTarget | undefined)?.url ?? ''
     return ''
   })
   const [baseUrl, setBaseUrl] = useState<string>(() => {
@@ -45,7 +45,7 @@ export function ProtocolTargetModal({ mode, protocol, initial, onSubmit, onDelet
     } else if (protocol === 'http') {
       onSubmit({ id, name: name.trim(), baseUrl: baseUrl.trim() } satisfies HttpTarget)
     } else {
-      onSubmit({ id, name: name.trim(), host: host.trim() } satisfies GraphQLTarget)
+      onSubmit({ id, name: name.trim(), url: host.trim() } satisfies GraphQLTarget)
     }
   }
 
