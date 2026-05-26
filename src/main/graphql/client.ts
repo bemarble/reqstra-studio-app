@@ -71,8 +71,15 @@ export async function executeGraphQLRequest(
   if (params.variables.trim()) {
     try {
       parsedVariables = (yaml.parse(params.variables) as Record<string, unknown>) ?? {}
-    } catch {
-      // 不正なYAMLは空オブジェクトで続行
+    } catch (e) {
+      return {
+        status: 'ERROR',
+        data: null,
+        errors: [],
+        httpStatus: 0,
+        durationMs: Date.now() - start,
+        error: `変数のYAMLパースエラー: ${e instanceof Error ? e.message : String(e)}`,
+      }
     }
   }
 
@@ -119,6 +126,10 @@ export async function introspectSchema(
   if (authHeader) allHeaders['Authorization'] = authHeader
 
   const client = new GraphQLClient(url, { headers: allHeaders })
-  const data = await client.request(getIntrospectionQuery())
-  return JSON.stringify(data, null, 2)
+  try {
+    const data = await client.request(getIntrospectionQuery())
+    return JSON.stringify(data, null, 2)
+  } catch (e) {
+    throw new Error(e instanceof Error ? e.message : String(e))
+  }
 }
