@@ -49,8 +49,8 @@ export function QueryEditor({
       storageKey="pane-gql-query-height"
     >
       {/* 上段: クエリエディタ */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 py-1">
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-1">
           <span className="text-xs text-[var(--color-text-secondary)]">Query</span>
           <button
             type="button"
@@ -62,7 +62,7 @@ export function QueryEditor({
             Pretty
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
           <MonacoEditor value={query} onChange={(v) => onQueryChange(v ?? '')} language="graphql" />
         </div>
         {queryError && (
@@ -73,8 +73,8 @@ export function QueryEditor({
       </div>
 
       {/* 下段: Variables + [Headers][Auth] タブ */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex shrink-0 border-b border-[var(--color-border)] px-3 py-1 text-xs">
+      <div className="flex h-full flex-col">
+        <div className="flex border-b border-[var(--color-border)] px-3 py-1 text-xs">
           {(['variables', 'headers', 'auth'] as BottomTab[]).map((tab) => (
             <button
               key={tab}
@@ -90,7 +90,7 @@ export function QueryEditor({
             </button>
           ))}
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
           {bottomTab === 'variables' && (
             <MonacoEditor
               value={variablesJson}
