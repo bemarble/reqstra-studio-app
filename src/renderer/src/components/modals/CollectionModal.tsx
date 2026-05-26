@@ -4,13 +4,12 @@ import type { Collection, Environment } from '../../../../shared/types/project'
 interface Props {
   mode: 'add' | 'edit'
   initial?: Collection
+  activeProtocol: 'grpc' | 'http' | 'graphql'
   environment: Environment | undefined
   onSubmit: (col: Collection) => void
   onClose: () => void
   isSubmitting?: boolean
 }
-
-const PROTOCOL_LABELS = { grpc: 'gRPC', http: 'HTTP', graphql: 'GraphQL' }
 
 // EnvironmentProtocols の各プロパティは GrpcTarget[] | HttpTarget[] | GraphQLTarget[] 型だが
 // id/name は共通で持つため共通型にキャストして使う
@@ -21,21 +20,13 @@ function getTargets(
   return (environment?.protocols[protocol] as Array<{ id: string; name: string }> | undefined) ?? []
 }
 
-export function CollectionModal({ mode, initial, environment, onSubmit, onClose, isSubmitting }: Props): JSX.Element {
+export function CollectionModal({ mode, initial, activeProtocol, environment, onSubmit, onClose, isSubmitting }: Props): JSX.Element {
   const [name, setName] = useState<string>(initial?.name ?? '')
-  const [protocol, setProtocol] = useState<'grpc' | 'http' | 'graphql'>(initial?.protocol ?? 'grpc')
-  const availableTargets = getTargets(environment, protocol)
-  const [protocolTargetId, setProtocolTargetId] = useState<string>(
-    initial?.protocolTargetId ?? availableTargets[0]?.id ?? '',
-  )
-
-  const handleProtocolChange = (next: 'grpc' | 'http' | 'graphql'): void => {
-    setProtocol(next)
-    const targets = getTargets(environment, next)
-    setProtocolTargetId(targets[0]?.id ?? '')
-  }
-
+  const protocol = initial?.protocol ?? activeProtocol
   const currentTargets = getTargets(environment, protocol)
+  const [protocolTargetId, setProtocolTargetId] = useState<string>(
+    initial?.protocolTargetId ?? currentTargets[0]?.id ?? '',
+  )
 
   const isValid = name.trim().length > 0
 
@@ -54,7 +45,9 @@ export function CollectionModal({ mode, initial, environment, onSubmit, onClose,
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-80 rounded bg-[var(--color-bg-secondary)] p-4 shadow-xl">
         <h2 className="mb-4 text-sm font-semibold text-[var(--color-text-primary)]">
-          {mode === 'add' ? 'コレクションを追加' : 'コレクションを編集'}
+          {mode === 'add'
+            ? protocol === 'graphql' ? 'クエリを追加' : 'コレクションを追加'
+            : protocol === 'graphql' ? 'クエリを編集' : 'コレクションを編集'}
         </h2>
 
         <div className="mb-3">
@@ -64,31 +57,17 @@ export function CollectionModal({ mode, initial, environment, onSubmit, onClose,
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例: UserService"
+            placeholder={protocol === 'graphql' ? '例: GetCountries' : '例: UserService'}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className="w-full rounded border border-[var(--color-border)] bg-[#3c3c3c] px-2 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-text-accent)]"
           />
         </div>
 
-        <div className="mb-3">
-          <label htmlFor="col-protocol" className="mb-1 block text-xs text-[var(--color-text-secondary)]">プロトコル</label>
-          <select
-            id="col-protocol"
-            value={protocol}
-            onChange={(e) => handleProtocolChange(e.target.value as 'grpc' | 'http' | 'graphql')}
-            disabled={mode === 'edit'}
-            className="w-full rounded border border-[var(--color-border)] bg-[#3c3c3c] px-2 py-1.5 text-xs text-[var(--color-text-primary)] outline-none disabled:opacity-60"
-          >
-            {(['grpc', 'http', 'graphql'] as const).map((p) => (
-              <option key={p} value={p}>
-                {PROTOCOL_LABELS[p]}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="mb-4">
-          <label htmlFor="col-target" className="mb-1 block text-xs text-[var(--color-text-secondary)]">ターゲット</label>
+          <label htmlFor="col-target" className="mb-1 block text-xs text-[var(--color-text-secondary)]">
+            {protocol === 'graphql' ? 'エンドポイント' : 'ターゲット'}
+          </label>
           <select
             id="col-target"
             value={protocolTargetId}
@@ -100,7 +79,9 @@ export function CollectionModal({ mode, initial, environment, onSubmit, onClose,
                 {t.name}
               </option>
             ))}
-            {currentTargets.length === 0 && <option value="">ターゲット未設定</option>}
+            {currentTargets.length === 0 && (
+              <option value="">{protocol === 'graphql' ? 'エンドポイント未設定' : 'ターゲット未設定'}</option>
+            )}
           </select>
         </div>
 

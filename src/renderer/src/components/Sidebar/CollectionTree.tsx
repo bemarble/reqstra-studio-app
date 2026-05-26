@@ -424,6 +424,7 @@ export function CollectionTree(): JSX.Element {
       {modalState?.type === 'add-collection' && (
         <CollectionModal
           mode="add"
+          activeProtocol={activeProtocol}
           environment={activeEnv}
           isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
@@ -434,6 +435,7 @@ export function CollectionTree(): JSX.Element {
         <CollectionModal
           mode="edit"
           initial={modalState.collection}
+          activeProtocol={activeProtocol}
           environment={activeEnv}
           isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
