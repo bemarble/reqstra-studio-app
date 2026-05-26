@@ -1,3 +1,12 @@
+export type GraphQLAuthType = 'none' | 'bearer' | 'basic' | 'oauth2'
+
+export interface GraphQLAuth {
+  type: GraphQLAuthType
+  token?: string     // bearer / oauth2
+  username?: string  // basic
+  password?: string  // basic
+}
+
 export interface GrpcTarget {
   id: string
   name: string
@@ -8,7 +17,7 @@ export interface GrpcTarget {
 export interface GraphQLTarget {
   id: string
   name: string
-  host: string
+  url: string  // "http://localhost:8080/graphql"（フルエンドポイントURL）
 }
 
 export interface HttpTarget {
@@ -36,12 +45,21 @@ export interface GrpcEndpoint {
   casesDir: string // "requests/grpc/UserService/GetUser"
 }
 
+export interface GraphQLEndpoint {
+  id: string
+  name: string      // 操作名 e.g. "GetUser"
+  casesDir: string  // "requests/graphql/GetUser"
+  query?: string    // GraphQLクエリ文字列（コレクション単位で保持）
+  headers?: Record<string, string>
+  auth?: GraphQLAuth
+}
+
 export interface Collection {
   id: string
   protocol: 'grpc' | 'graphql' | 'http'
   name: string
   protocolTargetId: string
-  endpoints: GrpcEndpoint[]
+  endpoints: GrpcEndpoint[] | GraphQLEndpoint[]
 }
 
 export interface ReqstraProject {

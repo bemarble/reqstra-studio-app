@@ -4,12 +4,15 @@ Mac向けデスクトップAPIクライアント。HTTP / gRPC / GraphQL の3プ
 
 ## 機能
 
-- gRPCリクエストの送信（サーバーリフレクション対応・実装済み）
+- gRPCリクエストの送信（サーバーリフレクション対応）
+- GraphQLリクエストの送信（クエリ・Variables・Headers・Auth対応）
 - リクエストパラメータをケース単位でYAMLファイルとして管理
 - 複数の環境（dev / stg / prod）とターゲットをプロジェクトで一元管理
 - VS Code風の3ペインUI（サイドバー・エディタ・レスポンスビューア）
 - 複数ケースをタブで同時に開いて比較可能
-- GraphQL / HTTPリクエストの送信（準備中）
+- HTTPリクエストの送信（準備中）
+
+---
 
 ### gRPC（実装済み）
 
@@ -18,13 +21,25 @@ Mac向けデスクトップAPIクライアント。HTTP / gRPC / GraphQL の3プ
 - レスポンスはBody・ステータスコード・実行時間で確認できる
 - gRPCメタデータ（ヘッダー）の設定にも対応
 
-### GraphQL（準備中）
+### GraphQL（実装済み）
 
-クエリとVariablesを入力してリクエストを送信する予定。
+- クエリはコレクション（クエリ名）単位で管理・自動保存
+- Variables はケース単位で管理（`+` ボタンで `default` ケースを自動作成）
+- Headers・Auth はコレクション単位で保持
+- レスポンスを Body / Request Headers / Response Headers のタブで確認
+- Introspect（スキーマ取得）に対応
+- 下部ステータスバーに保存状態（対象名・保存中/済）を表示
+
+#### GraphQL 操作フロー
+
+1. サイドバー上部の `＋` でコレクション（クエリ）を追加
+2. コレクション行の `＋` を押すと `default` ケースが作成され、エディタが開く
+3. Query エディタにクエリを入力 → 自動保存（800ms デバウンス）
+4. Variables タブにJSONを入力 → ケースファイルに自動保存
+5. Headers / Auth タブで認証情報を設定 → コレクション単位で自動保存
+6. `▶ Send` でリクエスト送信、レスポンスを右ペインで確認
 
 ### HTTP（準備中）
-
-メソッド・URL・ヘッダー・ボディを指定してリクエストを送信する予定。
 
 ---
 
@@ -64,6 +79,31 @@ npm run dev
 
 ---
 
+## データモデル
+
+### プロジェクト構造
+
+```
+my-project/
+├── reqstra-project.json        # プロジェクト定義（環境・コレクション・クエリ）
+├── requests/
+│   ├── grpc/ServiceName/MethodName/
+│   │   └── CaseA.yaml          # gRPCリクエストボディ
+│   └── graphql/QueryName/
+│       └── default.yaml        # GraphQL Variables（JSONオブジェクト）
+└── logs/
+    └── YYYY-MM-DD.ndjson       # 実行ログ（追記形式）
+```
+
+### GraphQL データの保存場所
+
+| データ | 保存場所 |
+|---|---|
+| クエリ文字列・Headers・Auth | `reqstra-project.json`（コレクション単位） |
+| Variables | `requests/graphql/{QueryName}/*.yaml`（ケース単位） |
+
+---
+
 ## 技術スタック
 
 | レイヤー | 技術 |
@@ -75,6 +115,7 @@ npm run dev
 | スタイリング | TailwindCSS |
 | gRPC | @grpc/grpc-js + @grpc/proto-loader |
 | gRPCリフレクション | grpc-js-reflection-client |
+| GraphQL | graphql + graphql-request |
 | YAMLパーサー | yaml |
 | テスト | vitest + @testing-library/react |
 

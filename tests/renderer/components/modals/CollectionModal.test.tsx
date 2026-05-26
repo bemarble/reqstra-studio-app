@@ -17,13 +17,13 @@ const mockEnv: Environment = {
 
 describe('CollectionModal', () => {
   it('名前が空の時は追加ボタンが無効', () => {
-    render(<CollectionModal mode="add" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
+    render(<CollectionModal mode="add" activeProtocol="grpc" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
     expect(screen.getByRole('button', { name: '追加' })).toBeDisabled()
   })
 
-  it('名前を入力して追加するとonSubmitが呼ばれる', () => {
+  it('名前を入力して追加するとonSubmitが呼ばれる（gRPC）', () => {
     const onSubmit = vi.fn()
-    render(<CollectionModal mode="add" environment={mockEnv} onSubmit={onSubmit} onClose={vi.fn()} />)
+    render(<CollectionModal mode="add" activeProtocol="grpc" environment={mockEnv} onSubmit={onSubmit} onClose={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText('例: UserService'), { target: { value: 'UserService' } })
     fireEvent.click(screen.getByRole('button', { name: '追加' }))
     expect(onSubmit).toHaveBeenCalledWith(
@@ -31,17 +31,9 @@ describe('CollectionModal', () => {
     )
   })
 
-  it('editモードではプロトコルが変更不可', () => {
-    const collection = {
-      id: 'col-1',
-      protocol: 'grpc' as const,
-      name: 'UserService',
-      protocolTargetId: 'grpc-1',
-      endpoints: [],
-    }
-    render(<CollectionModal mode="edit" initial={collection} environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
-    const protocolSelect = screen.getByDisplayValue('gRPC')
-    expect(protocolSelect).toBeDisabled()
+  it('プロトコル選択欄が表示されない', () => {
+    render(<CollectionModal mode="add" activeProtocol="grpc" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.queryByLabelText('プロトコル')).not.toBeInTheDocument()
   })
 
   it('editモードでは既存の値が初期表示される', () => {
@@ -52,14 +44,24 @@ describe('CollectionModal', () => {
       protocolTargetId: 'grpc-1',
       endpoints: [],
     }
-    render(<CollectionModal mode="edit" initial={collection} environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
+    render(<CollectionModal mode="edit" initial={collection} activeProtocol="grpc" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
     expect(screen.getByDisplayValue('UserService')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '保存' })).toBeInTheDocument()
   })
 
+  it('GraphQLモードではタイトルが「クエリを追加」になる', () => {
+    render(<CollectionModal mode="add" activeProtocol="graphql" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.getByText('クエリを追加')).toBeInTheDocument()
+  })
+
+  it('GraphQLモードではラベルが「エンドポイント」になる', () => {
+    render(<CollectionModal mode="add" activeProtocol="graphql" environment={mockEnv} onSubmit={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.getByText('エンドポイント')).toBeInTheDocument()
+  })
+
   it('キャンセルボタンでonCloseが呼ばれる', () => {
     const onClose = vi.fn()
-    render(<CollectionModal mode="add" environment={mockEnv} onSubmit={vi.fn()} onClose={onClose} />)
+    render(<CollectionModal mode="add" activeProtocol="grpc" environment={mockEnv} onSubmit={vi.fn()} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
     expect(onClose).toHaveBeenCalled()
   })

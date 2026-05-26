@@ -104,7 +104,7 @@ describe('ProtocolTargetModal — http', () => {
 })
 
 describe('ProtocolTargetModal — graphql', () => {
-  it('GraphQLターゲットを追加するとonSubmitに host が含まれる', () => {
+  it('GraphQLターゲットを追加するとonSubmitに url が含まれる', () => {
     const onSubmit = vi.fn()
     render(<ProtocolTargetModal mode="add" protocol="graphql" onSubmit={onSubmit} onClose={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText('例: GraphQL API'), { target: { value: 'GraphQL' } })
@@ -113,7 +113,7 @@ describe('ProtocolTargetModal — graphql', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: '追加' }))
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'GraphQL', host: 'http://localhost:4000/graphql' }),
+      expect.objectContaining({ name: 'GraphQL', url: 'http://localhost:4000/graphql' }),
     )
   })
 })

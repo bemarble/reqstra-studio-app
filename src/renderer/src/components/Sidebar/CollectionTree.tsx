@@ -1,16 +1,25 @@
-import { useState, useEffect, Fragment, type JSX } from 'react'
+import React, { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
-import type { Collection, GrpcEndpoint, GrpcTarget } from '../../../../shared/types/project'
+import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint } from '../../../../shared/types/project'
 import { CollectionModal } from '../modals/CollectionModal'
 import { EndpointModal } from '../modals/EndpointModal'
+import { GraphQLEndpointModal } from '../modals/GraphQLEndpointModal'
 import * as path from 'path'
+
+function getAvailableCaseName(existingCases: string[]): string {
+  const existing = new Set(existingCases)
+  if (!existing.has('default.yaml')) return 'default.yaml'
+  let n = 2
+  while (existing.has(`default${n}.yaml`)) n++
+  return `default${n}.yaml`
+}
 
 type ModalState =
   | { type: 'add-collection' }
   | { type: 'edit-collection'; collection: Collection }
   | { type: 'add-endpoint'; collectionId: string }
-  | { type: 'edit-endpoint'; collectionId: string; endpoint: GrpcEndpoint }
+  | { type: 'edit-endpoint'; collectionId: string; endpoint: GrpcEndpoint | GraphQLEndpoint }
   | null
 
 export function CollectionTree(): JSX.Element {
@@ -52,11 +61,11 @@ export function CollectionTree(): JSX.Element {
     (c) => c.protocol === activeProtocol && c.protocolTargetId === activeProtocolTargetId,
   )
 
-  const isEndpointVisible = (ep: GrpcEndpoint): boolean =>
+  const isEndpointVisible = (ep: GrpcEndpoint | GraphQLEndpoint): boolean =>
     activeProtocol !== 'grpc' || isReflected || activeCaseDirs.has(ep.casesDir)
 
   const visibleCollections = collections.filter((col) =>
-    col.endpoints.some((ep) => isEndpointVisible(ep)),
+    col.protocol !== 'grpc' || col.endpoints.some((ep) => isEndpointVisible(ep)),
   )
 
   const activeEnv =
@@ -119,7 +128,18 @@ export function CollectionTree(): JSX.Element {
     }
   }
 
-  const toggleCollection = (id: string): void => {
+  const toggleCollection = async (id: string): Promise<void> => {
+    if (!expandedCollections.has(id) && project) {
+      const col = collections.find((c) => c.id === id)
+      if (col?.protocol === 'graphql') {
+        const ep = col.endpoints[0]
+        if (ep) {
+          const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+          const cases = await window.reqstraApi.listCases(casesAbsDir)
+          setCasesForEndpoint(ep.id, cases)
+        }
+      }
+    }
     setExpandedCollections((prev) => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
@@ -127,7 +147,7 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const toggleEndpoint = async (ep: GrpcEndpoint): Promise<void> => {
+  const toggleEndpoint = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     if (!project) return
     const casesAbsDir = path.join(project.projectDir, ep.casesDir)
     if (!expandedEndpoints.has(ep.id)) {
@@ -141,7 +161,7 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const handleCaseClick = (_col: Collection, ep: GrpcEndpoint, caseName: string): void => {
+  const handleCaseClick = (_col: Collection, ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): void => {
     openTab({
       type: 'case',
       id: `${ep.id}::${caseName}`,
@@ -151,12 +171,12 @@ export function CollectionTree(): JSX.Element {
     })
   }
 
-  const handleCaseDuplicate = (ep: GrpcEndpoint, caseName: string): void => {
+  const handleCaseDuplicate = (ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): void => {
     const base = caseName.replace(/\.ya?ml$/, '')
     setPendingDuplicate({ endpointId: ep.id, sourceName: caseName, inputValue: `${base}_copy` })
   }
 
-  const handleCaseDuplicateConfirm = async (ep: GrpcEndpoint): Promise<void> => {
+  const handleCaseDuplicateConfirm = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     if (!project || !pendingDuplicate) return
     const rawName = pendingDuplicate.inputValue.trim()
     const sourceName = pendingDuplicate.sourceName
@@ -182,7 +202,7 @@ export function CollectionTree(): JSX.Element {
     }
   }
 
-  const handleCaseDelete = async (ep: GrpcEndpoint, caseName: string): Promise<void> => {
+  const handleCaseDelete = async (ep: GrpcEndpoint | GraphQLEndpoint, caseName: string): Promise<void> => {
     if (!project) return
     if (!window.confirm(`"${caseName.replace(/\.ya?ml$/, '')}" を削除しますか？`)) return
     const absolutePath = path.join(project.projectDir, ep.casesDir, caseName)
@@ -199,7 +219,16 @@ export function CollectionTree(): JSX.Element {
     setIsSubmitting(true)
     try {
       if (modalState?.type === 'add-collection') {
-        addCollection(col)
+        if (col.protocol === 'graphql') {
+          const autoEndpoint: GraphQLEndpoint = {
+            id: crypto.randomUUID(),
+            name: col.name,
+            casesDir: `requests/graphql/${col.name}`,
+          }
+          addCollection({ ...col, endpoints: [autoEndpoint] })
+        } else {
+          addCollection(col)
+        }
       } else {
         updateCollection(col)
       }
@@ -215,7 +244,7 @@ export function CollectionTree(): JSX.Element {
     if (await persistProject()) return
   }
 
-  const handleEndpointSubmit = async (ep: GrpcEndpoint): Promise<void> => {
+  const handleEndpointSubmit = async (ep: GrpcEndpoint | GraphQLEndpoint): Promise<void> => {
     setIsSubmitting(true)
     try {
       if (modalState?.type === 'add-endpoint') {
@@ -239,7 +268,7 @@ export function CollectionTree(): JSX.Element {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-2 py-1">
         <span className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
-          コレクション
+          {activeProtocol === 'graphql' ? 'クエリ' : 'コレクション'}
         </span>
         <div className="flex items-center gap-1">
           {activeProtocol === 'grpc' && (
@@ -256,7 +285,7 @@ export function CollectionTree(): JSX.Element {
           <button
             type="button"
             onClick={() => setModalState({ type: 'add-collection' })}
-            title="コレクションを追加"
+            title={activeProtocol === 'graphql' ? 'クエリを追加' : 'コレクションを追加'}
             className="rounded bg-[var(--color-bg-active)] px-2 py-1 text-sm text-white"
           >
             ＋
@@ -277,13 +306,50 @@ export function CollectionTree(): JSX.Element {
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-secondary)]"
-                onClick={() => toggleCollection(col.id)}
+                onClick={() => {
+                  void toggleCollection(col.id)
+                  if (col.protocol === 'graphql') {
+                    const ep = col.endpoints[0]
+                    if (ep) {
+                      openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
+                    }
+                  }
+                }}
               >
                 <span className="mr-1.5 shrink-0 text-base leading-none">{expandedCollections.has(col.id) ? '▾' : '▸'}</span>
                 <span className="truncate font-medium">{col.name}</span>
               </button>
               <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                {col.protocol !== 'grpc' && (
+                {col.protocol === 'graphql' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ep = col.endpoints[0]
+                      if (!ep || !project) return
+                      const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+                      void (async () => {
+                        const existingCases = await window.reqstraApi.listCases(casesAbsDir)
+                        const caseName = getAvailableCaseName(existingCases)
+                        await window.reqstraApi.writeCase(path.join(casesAbsDir, caseName), '')
+                        const updatedCases = await window.reqstraApi.listCases(casesAbsDir)
+                        setCasesForEndpoint(ep.id, updatedCases)
+                        setExpandedCollections((prev) => new Set([...prev, col.id]))
+                        openTab({
+                          type: 'case',
+                          id: `${ep.id}::${caseName}`,
+                          label: `${col.name} / ${caseName.replace(/\.yaml$/, '')}`,
+                          endpointId: ep.id,
+                          caseName,
+                        })
+                      })()
+                    }}
+                    title="ケースを作成"
+                    className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  >
+                    ＋
+                  </button>
+                )}
+                {col.protocol !== 'grpc' && col.protocol !== 'graphql' && (
                   <button
                     type="button"
                     onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
@@ -296,7 +362,7 @@ export function CollectionTree(): JSX.Element {
                 <button
                   type="button"
                   onClick={() => setModalState({ type: 'edit-collection', collection: col })}
-                  title="コレクションを編集"
+                  title={activeProtocol === 'graphql' ? 'クエリを編集' : 'コレクションを編集'}
                   className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 >
                   ✎
@@ -305,7 +371,7 @@ export function CollectionTree(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => handleCollectionDelete(col.id)}
-                    title="コレクションを削除"
+                    title={activeProtocol === 'graphql' ? 'クエリを削除' : 'コレクションを削除'}
                     className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
                   >
                     ×
@@ -313,7 +379,64 @@ export function CollectionTree(): JSX.Element {
                 )}
               </div>
             </div>
-            {expandedCollections.has(col.id) &&
+            {/* GraphQL: ケースをコレクション直下に表示（エンドポイント行は非表示） */}
+            {expandedCollections.has(col.id) && col.protocol === 'graphql' && (() => {
+              const ep = col.endpoints[0]
+              if (!ep) return null
+              return (casesByEndpoint[ep.id] ?? []).map((caseName) => (
+                <Fragment key={caseName}>
+                  <div className="group flex items-center py-1 pl-5 pr-2 hover:bg-[var(--color-bg-tertiary)]">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 truncate text-left text-[var(--color-text-secondary)] hover:text-white"
+                      onClick={() => handleCaseClick(col, ep, caseName)}
+                    >
+                      {caseName.replace(/\.ya?ml$/, '')}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => handleCaseDuplicate(ep, caseName)}
+                        title="ケースを複製"
+                        className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      >
+                        ⎘
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleCaseDelete(ep, caseName)}
+                        title="ケースを削除"
+                        className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  {pendingDuplicate?.endpointId === ep.id &&
+                    pendingDuplicate.sourceName === caseName && (
+                      <div className="flex items-center py-1 pl-5 pr-2">
+                        <input
+                          type="text"
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          value={pendingDuplicate.inputValue}
+                          onChange={(e) =>
+                            setPendingDuplicate({ ...pendingDuplicate, inputValue: e.target.value })
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') void handleCaseDuplicateConfirm(ep)
+                            if (e.key === 'Escape') setPendingDuplicate(null)
+                          }}
+                          onBlur={() => setPendingDuplicate(null)}
+                          className="w-full rounded border border-[var(--color-text-accent)] bg-[#3c3c3c] px-1.5 py-0.5 text-sm text-[var(--color-text-primary)] outline-none"
+                        />
+                      </div>
+                    )}
+                </Fragment>
+              ))
+            })()}
+            {/* gRPC / HTTP: エンドポイント行を表示 */}
+            {expandedCollections.has(col.id) && col.protocol !== 'graphql' &&
               col.endpoints
                 .filter((ep) => isEndpointVisible(ep))
                 .map((ep) => (
@@ -423,6 +546,7 @@ export function CollectionTree(): JSX.Element {
       {modalState?.type === 'add-collection' && (
         <CollectionModal
           mode="add"
+          activeProtocol={activeProtocol}
           environment={activeEnv}
           isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
@@ -433,13 +557,22 @@ export function CollectionTree(): JSX.Element {
         <CollectionModal
           mode="edit"
           initial={modalState.collection}
+          activeProtocol={activeProtocol}
           environment={activeEnv}
           isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}
           onClose={() => setModalState(null)}
         />
       )}
-      {modalState?.type === 'add-endpoint' && (
+      {modalState?.type === 'add-endpoint' && activeProtocol === 'graphql' && (
+        <GraphQLEndpointModal
+          mode="add"
+          isSubmitting={isSubmitting}
+          onSubmit={handleEndpointSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'add-endpoint' && activeProtocol !== 'graphql' && (
         <EndpointModal
           mode="add"
           protocol={activeProtocol}
@@ -448,11 +581,20 @@ export function CollectionTree(): JSX.Element {
           onClose={() => setModalState(null)}
         />
       )}
-      {modalState?.type === 'edit-endpoint' && (
+      {modalState?.type === 'edit-endpoint' && activeProtocol === 'graphql' && (
+        <GraphQLEndpointModal
+          mode="edit"
+          initial={modalState.endpoint as GraphQLEndpoint}
+          isSubmitting={isSubmitting}
+          onSubmit={handleEndpointSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'edit-endpoint' && activeProtocol !== 'graphql' && (
         <EndpointModal
           mode="edit"
           protocol={activeProtocol}
-          initial={modalState.endpoint}
+          initial={modalState.endpoint as GrpcEndpoint}
           isSubmitting={isSubmitting}
           onSubmit={handleEndpointSubmit}
           onClose={() => setModalState(null)}

@@ -19,12 +19,16 @@ export interface ScratchTab {
 
 export type Tab = CaseTab | ScratchTab
 
+export type SaveStatus = 'idle' | 'saving' | 'saved'
+
 interface AppState {
   activeProtocol: Protocol
   activeEnvironmentId: string | null
   activeProtocolTargetId: string | null
   openTabs: Tab[]
   activeTabId: string | null
+  saveStatus: SaveStatus
+  saveLabel: string | null
   setActiveProtocol: (protocol: Protocol) => void
   setActiveEnvironmentId: (id: string | null) => void
   setActiveProtocolTargetId: (id: string | null) => void
@@ -32,6 +36,7 @@ interface AppState {
   closeTab: (id: string) => void
   replaceTab: (oldId: string, newTab: Tab) => void
   setActiveTabId: (id: string) => void
+  setSaveStatus: (status: SaveStatus, label?: string | null) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -40,6 +45,8 @@ export const useAppStore = create<AppState>((set) => ({
   activeProtocolTargetId: null,
   openTabs: [],
   activeTabId: null,
+  saveStatus: 'idle',
+  saveLabel: null,
   setActiveProtocol: (protocol) =>
     set({ activeProtocol: protocol, openTabs: [], activeTabId: null }),
   setActiveEnvironmentId: (id) => set({ activeEnvironmentId: id }),
@@ -64,4 +71,9 @@ export const useAppStore = create<AppState>((set) => ({
       activeTabId: state.activeTabId === oldId ? newTab.id : state.activeTabId,
     })),
   setActiveTabId: (id) => set({ activeTabId: id }),
+  setSaveStatus: (status, label) =>
+    set((state) => ({
+      saveStatus: status,
+      saveLabel: label !== undefined ? label : state.saveLabel,
+    })),
 }))

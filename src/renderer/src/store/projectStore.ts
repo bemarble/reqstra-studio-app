@@ -7,6 +7,7 @@ import type {
   HttpTarget,
   GraphQLTarget,
   GrpcEndpoint,
+  GraphQLEndpoint,
 } from '../../../shared/types/project'
 
 interface ProjectState {
@@ -34,8 +35,8 @@ interface ProjectState {
   ) => void
   deleteProtocolTarget: (envId: string, protocol: 'grpc' | 'http' | 'graphql', targetId: string) => void
   deleteCollection: (id: string) => void
-  addEndpoint: (collectionId: string, endpoint: GrpcEndpoint) => void
-  updateEndpoint: (collectionId: string, endpoint: GrpcEndpoint) => void
+  addEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint) => void
+  updateEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint) => void
   deleteEndpoint: (collectionId: string, endpointId: string) => void
 }
 

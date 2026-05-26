@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useAppStore } from '../../store/appStore'
 import { TabBar } from './TabBar'
 import { GrpcPanel } from './GrpcPanel'
+import { GraphQLPanel } from './GraphQLPanel'
 
 export function MainPanel(): JSX.Element {
   const openTabs = useAppStore((s) => s.openTabs)
@@ -22,7 +23,10 @@ export function MainPanel(): JSX.Element {
         {activeTab && activeProtocol === 'grpc' && (
           <GrpcPanel key={activeTab.id} tab={activeTab} />
         )}
-        {activeTab && activeProtocol !== 'grpc' && (
+        {activeTab && activeProtocol === 'graphql' && (
+          <GraphQLPanel key={activeTab.id} tab={activeTab} />
+        )}
+        {activeTab && activeProtocol !== 'grpc' && activeProtocol !== 'graphql' && (
           <div className="flex h-full items-center justify-center text-[var(--color-text-secondary)]">
             <p className="text-sm">{activeProtocol.toUpperCase()} は次フェーズで実装予定</p>
           </div>

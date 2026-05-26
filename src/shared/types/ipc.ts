@@ -1,4 +1,6 @@
-import type { ReqstraProject } from './project'
+import type { ReqstraProject, GraphQLAuth, GraphQLAuthType } from './project'
+
+export type { GraphQLAuth, GraphQLAuthType }
 
 export interface GrpcServiceInfo {
   name: string
@@ -34,6 +36,25 @@ export interface LogEntry {
   response: unknown
 }
 
+export interface GraphQLRequestParams {
+  url: string
+  query: string
+  variables: string              // YAML文字列（Main Processでパース）
+  headers: Record<string, string>
+  auth: GraphQLAuth
+}
+
+export interface GraphQLResponse {
+  status: 'OK' | 'ERROR'
+  data: unknown
+  errors: unknown[]
+  httpStatus: number
+  durationMs: number
+  error?: string
+  requestHeaders?: Record<string, string>
+  responseHeaders?: Record<string, string>
+}
+
 // contextBridgeで公開するAPI
 export interface IpcApi {
   openProject: () => Promise<ReqstraProject | null>
@@ -46,6 +67,8 @@ export interface IpcApi {
   grpcReflect: (host: string, secure: boolean) => Promise<GrpcServiceInfo[]>
   grpcDescribeMethod: (host: string, secure: boolean, method: string) => Promise<string>
   grpcRequest: (params: GrpcRequestParams) => Promise<GrpcResponse>
+  graphqlRequest: (params: GraphQLRequestParams) => Promise<GraphQLResponse>
+  graphqlIntrospect: (url: string, headers: Record<string, string>, auth: GraphQLAuth) => Promise<string>
   writeLog: (projectDir: string, entry: LogEntry) => Promise<void>
   readLogs: (projectDir: string, date: string) => Promise<LogEntry[]>
 }
