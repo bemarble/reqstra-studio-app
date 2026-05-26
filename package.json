@@ -28,6 +28,8 @@
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.7.15",
     "@monaco-editor/react": "^4.7.0",
+    "graphql": "^16.14.0",
+    "graphql-request": "^7.4.0",
     "grpc-js-reflection-client": "^1.4.0",
     "path-browserify": "^1.0.1",
     "yaml": "^2.9.0",
@@ -42,7 +44,9 @@
     "dmg": {
       "title": "Reqstra Studio"
     },
-    "files": ["out/**/*"],
+    "files": [
+      "out/**/*"
+    ],
     "directories": {
       "buildResources": "build"
     }
