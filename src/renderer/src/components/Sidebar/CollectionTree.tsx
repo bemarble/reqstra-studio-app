@@ -240,7 +240,7 @@ export function CollectionTree(): JSX.Element {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-2 py-1">
         <span className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
-          コレクション
+          {activeProtocol === 'graphql' ? 'クエリ' : 'コレクション'}
         </span>
         <div className="flex items-center gap-1">
           {activeProtocol === 'grpc' && (
@@ -257,7 +257,7 @@ export function CollectionTree(): JSX.Element {
           <button
             type="button"
             onClick={() => setModalState({ type: 'add-collection' })}
-            title="コレクションを追加"
+            title={activeProtocol === 'graphql' ? 'クエリを追加' : 'コレクションを追加'}
             className="rounded bg-[var(--color-bg-active)] px-2 py-1 text-sm text-white"
           >
             ＋
@@ -297,7 +297,7 @@ export function CollectionTree(): JSX.Element {
                 <button
                   type="button"
                   onClick={() => setModalState({ type: 'edit-collection', collection: col })}
-                  title="コレクションを編集"
+                  title={activeProtocol === 'graphql' ? 'クエリを編集' : 'コレクションを編集'}
                   className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 >
                   ✎
@@ -306,7 +306,7 @@ export function CollectionTree(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => handleCollectionDelete(col.id)}
-                    title="コレクションを削除"
+                    title={activeProtocol === 'graphql' ? 'クエリを削除' : 'コレクションを削除'}
                     className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
                   >
                     ×

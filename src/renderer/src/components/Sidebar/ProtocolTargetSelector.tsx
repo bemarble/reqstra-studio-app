@@ -98,7 +98,7 @@ export function ProtocolTargetSelector(): JSX.Element {
               {t.name}
             </option>
           ))}
-          {targets.length === 0 && <option value="">ターゲット未設定</option>}
+          {targets.length === 0 && <option value="">{activeProtocol === 'graphql' ? 'エンドポイント未設定' : 'ターゲット未設定'}</option>}
         </select>
         {active && (
           <button
@@ -109,7 +109,7 @@ export function ProtocolTargetSelector(): JSX.Element {
                   ?.find((t) => t.id === active.id)
               if (fullTarget) setModal({ type: 'edit', target: fullTarget })
             }}
-            title="ターゲットを編集"
+            title={activeProtocol === 'graphql' ? 'エンドポイントを編集' : 'ターゲットを編集'}
             className="shrink-0 rounded bg-[#3c3c3c] px-1.5 py-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             ✎
@@ -118,7 +118,7 @@ export function ProtocolTargetSelector(): JSX.Element {
         <button
           type="button"
           onClick={() => setModal({ type: 'add' })}
-          title="ターゲットを追加"
+          title={activeProtocol === 'graphql' ? 'エンドポイントを追加' : 'ターゲットを追加'}
           className="shrink-0 rounded bg-[var(--color-bg-active)] px-1.5 py-1 text-sm text-white"
         >
           ＋
