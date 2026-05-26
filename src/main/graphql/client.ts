@@ -89,19 +89,29 @@ export async function executeGraphQLRequest(
     }
   }
 
+  const headersToRecord = (h: Headers): Record<string, string> => {
+    const result: Record<string, string> = {}
+    h.forEach((value, key) => { result[key] = value })
+    return result
+  }
+
   try {
     const client = new GraphQLClient(params.url, { headers: allHeaders })
-    const data = await client.request(params.query, parsedVariables)
+    const result = await client.rawRequest(params.query, parsedVariables)
     return {
       status: 'OK',
-      data,
+      data: result.data,
       errors: [],
-      httpStatus: 200,
+      httpStatus: result.status,
       durationMs: Date.now() - start,
+      requestHeaders: allHeaders,
+      responseHeaders: headersToRecord(result.headers),
     }
   } catch (e) {
     if (e instanceof ClientError) {
       const resp = e.response
+      const responseHeaders =
+        resp.headers instanceof Headers ? headersToRecord(resp.headers) : {}
       return {
         status: 'ERROR',
         data: resp.data ?? null,
@@ -109,6 +119,8 @@ export async function executeGraphQLRequest(
         httpStatus: resp.status,
         durationMs: Date.now() - start,
         error: e.message,
+        requestHeaders: allHeaders,
+        responseHeaders,
       }
     }
     return {
@@ -118,6 +130,7 @@ export async function executeGraphQLRequest(
       httpStatus: 0,
       durationMs: Date.now() - start,
       error: e instanceof Error ? e.message : String(e),
+      requestHeaders: allHeaders,
     }
   }
 }

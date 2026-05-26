@@ -51,6 +51,8 @@ export interface GraphQLResponse {
   httpStatus: number
   durationMs: number
   error?: string
+  requestHeaders?: Record<string, string>
+  responseHeaders?: Record<string, string>
 }
 
 // contextBridgeで公開するAPI
