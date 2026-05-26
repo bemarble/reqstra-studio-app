@@ -14,6 +14,9 @@ const api: IpcApi = {
   grpcDescribeMethod: (host, secure, method) =>
     ipcRenderer.invoke('grpc:describeMethod', host, secure, method),
   grpcRequest: (params) => ipcRenderer.invoke('grpc:request', params),
+  graphqlRequest: (params) => ipcRenderer.invoke('graphql:request', params),
+  graphqlIntrospect: (url, headers, auth) =>
+    ipcRenderer.invoke('graphql:introspect', url, headers, auth),
   writeLog: (projectDir, entry) => ipcRenderer.invoke('log:write', projectDir, entry),
   readLogs: (projectDir, date) => ipcRenderer.invoke('log:read', projectDir, date),
 }
