@@ -120,7 +120,18 @@ export function CollectionTree(): JSX.Element {
     }
   }
 
-  const toggleCollection = (id: string): void => {
+  const toggleCollection = async (id: string): Promise<void> => {
+    if (!expandedCollections.has(id) && project) {
+      const col = collections.find((c) => c.id === id)
+      if (col?.protocol === 'graphql') {
+        const ep = col.endpoints[0]
+        if (ep) {
+          const casesAbsDir = path.join(project.projectDir, ep.casesDir)
+          const cases = await window.reqstraApi.listCases(casesAbsDir)
+          setCasesForEndpoint(ep.id, cases)
+        }
+      }
+    }
     setExpandedCollections((prev) => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
@@ -287,7 +298,7 @@ export function CollectionTree(): JSX.Element {
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-secondary)]"
-                onClick={() => toggleCollection(col.id)}
+                onClick={() => void toggleCollection(col.id)}
               >
                 <span className="mr-1.5 shrink-0 text-base leading-none">{expandedCollections.has(col.id) ? '▾' : '▸'}</span>
                 <span className="truncate font-medium">{col.name}</span>
@@ -338,7 +349,64 @@ export function CollectionTree(): JSX.Element {
                 )}
               </div>
             </div>
-            {expandedCollections.has(col.id) &&
+            {/* GraphQL: ケースをコレクション直下に表示（エンドポイント行は非表示） */}
+            {expandedCollections.has(col.id) && col.protocol === 'graphql' && (() => {
+              const ep = col.endpoints[0]
+              if (!ep) return null
+              return (casesByEndpoint[ep.id] ?? []).map((caseName) => (
+                <Fragment key={caseName}>
+                  <div className="group flex items-center py-1 pl-5 pr-2 hover:bg-[var(--color-bg-tertiary)]">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 truncate text-left text-[var(--color-text-secondary)] hover:text-white"
+                      onClick={() => handleCaseClick(col, ep, caseName)}
+                    >
+                      {caseName.replace(/\.ya?ml$/, '')}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => handleCaseDuplicate(ep, caseName)}
+                        title="ケースを複製"
+                        className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      >
+                        ⎘
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleCaseDelete(ep, caseName)}
+                        title="ケースを削除"
+                        className="rounded px-1.5 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-error)]"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  {pendingDuplicate?.endpointId === ep.id &&
+                    pendingDuplicate.sourceName === caseName && (
+                      <div className="flex items-center py-1 pl-5 pr-2">
+                        <input
+                          type="text"
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          value={pendingDuplicate.inputValue}
+                          onChange={(e) =>
+                            setPendingDuplicate({ ...pendingDuplicate, inputValue: e.target.value })
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') void handleCaseDuplicateConfirm(ep)
+                            if (e.key === 'Escape') setPendingDuplicate(null)
+                          }}
+                          onBlur={() => setPendingDuplicate(null)}
+                          className="w-full rounded border border-[var(--color-text-accent)] bg-[#3c3c3c] px-1.5 py-0.5 text-sm text-[var(--color-text-primary)] outline-none"
+                        />
+                      </div>
+                    )}
+                </Fragment>
+              ))
+            })()}
+            {/* gRPC / HTTP: エンドポイント行を表示 */}
+            {expandedCollections.has(col.id) && col.protocol !== 'graphql' &&
               col.endpoints
                 .filter((ep) => isEndpointVisible(ep))
                 .map((ep) => (
