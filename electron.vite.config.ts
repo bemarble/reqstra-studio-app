@@ -4,7 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    // graphql-request は pure ESM のため CJS require() できない。
+    // バンドルに含めることで Rollup が ESM→CJS 変換を担う。
+    plugins: [externalizeDepsPlugin({ exclude: ['graphql-request'] })],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
@@ -15,6 +17,10 @@ export default defineConfig({
       alias: {
         path: 'path-browserify',
       },
+    },
+    optimizeDeps: {
+      // graphql を明示的にプリバンドルし、環境差異による解決失敗を防ぐ
+      include: ['graphql'],
     },
   },
 })
