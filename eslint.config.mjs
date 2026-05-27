@@ -33,10 +33,11 @@ export default [
       'jsx-a11y': jsxA11y
     },
     rules: {
-      // react-hooks ルール（exhaustive-deps のみ warn、他は既存コードに影響しないよう off）
-      'react-hooks/rules-of-hooks': 'off',
+      // react-hooks ルール
+      'react-hooks/rules-of-hooks': 'error', // React Hooks の基本ルール（条件分岐・ループ内呼び出し禁止）
       'react-hooks/exhaustive-deps': 'warn',
-      // jsx-a11y ルール（既存コードへの影響を避けるため必要最小限のみ）
+      // jsx-a11y: プラグインを登録してインライン eslint-disable コメントを有効にする
+      // 既存コードへの影響を抑えるため、推奨ルールは段階的に有効化する
       'jsx-a11y/no-autofocus': 'off',
       'jsx-a11y/label-has-associated-control': 'off',
       'jsx-a11y/no-static-element-interactions': 'off',
