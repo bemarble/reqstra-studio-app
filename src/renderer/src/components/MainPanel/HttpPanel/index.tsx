@@ -92,7 +92,6 @@ export function HttpPanel({ tab }: Props): JSX.Element {
   const endpointTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setMethod(endpoint?.method ?? 'GET')
     setEpPath(endpoint?.path ?? '/')

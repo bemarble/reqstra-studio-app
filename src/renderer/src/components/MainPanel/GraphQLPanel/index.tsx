@@ -78,7 +78,6 @@ export function GraphQLPanel({ tab }: Props): JSX.Element {
     : '(ターゲット未設定)'
 
   // エンドポイントが切り替わったときに query/headers/auth を読み込む
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setQuery(endpoint?.query ?? '')
     setHeaders(endpoint?.headers ?? {})
