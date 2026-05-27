@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
-import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint, HttpEndpoint } from '../../../../shared/types/project'
+import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint } from '../../../../shared/types/project'
 import { CollectionModal } from '../modals/CollectionModal'
 import { EndpointModal } from '../modals/EndpointModal'
 import { GraphQLEndpointModal } from '../modals/GraphQLEndpointModal'
@@ -421,7 +421,6 @@ export function CollectionTree(): JSX.Element {
                       <div className="flex items-center py-1 pl-5 pr-2">
                         <input
                           type="text"
-                          // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
                           value={pendingDuplicate.inputValue}
                           onChange={(e) =>
@@ -524,7 +523,6 @@ export function CollectionTree(): JSX.Element {
                             <div className="flex items-center py-1 pl-10 pr-2">
                               <input
                                 type="text"
-                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                                 value={pendingDuplicate.inputValue}
                                 onChange={(e) =>

@@ -48,7 +48,6 @@ export function GraphQLEndpointModal({
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
             placeholder="例: GetUser"
-            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className="w-full rounded border border-[var(--color-border)] bg-[#3c3c3c] px-2 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-text-accent)]"
           />
