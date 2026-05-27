@@ -1,10 +1,11 @@
 import React, { useState, useEffect, Fragment, type JSX } from 'react'
 import { useProjectStore } from '../../store/projectStore'
 import { useAppStore } from '../../store/appStore'
-import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint } from '../../../../shared/types/project'
+import type { Collection, GrpcEndpoint, GrpcTarget, GraphQLEndpoint, HttpEndpoint } from '../../../../shared/types/project'
 import { CollectionModal } from '../modals/CollectionModal'
 import { EndpointModal } from '../modals/EndpointModal'
 import { GraphQLEndpointModal } from '../modals/GraphQLEndpointModal'
+import { HttpEndpointModal } from '../modals/HttpEndpointModal'
 import * as path from 'path'
 
 function getAvailableCaseName(existingCases: string[]): string {
@@ -131,7 +132,7 @@ export function CollectionTree(): JSX.Element {
   const toggleCollection = async (id: string): Promise<void> => {
     if (!expandedCollections.has(id) && project) {
       const col = collections.find((c) => c.id === id)
-      if (col?.protocol === 'graphql') {
+      if (col?.protocol === 'graphql' || col?.protocol === 'http') {
         const ep = col.endpoints[0]
         if (ep) {
           const casesAbsDir = path.join(project.projectDir, ep.casesDir)
@@ -226,6 +227,9 @@ export function CollectionTree(): JSX.Element {
             casesDir: `requests/graphql/${col.name}`,
           }
           addCollection({ ...col, endpoints: [autoEndpoint] })
+        } else if (col.protocol === 'http') {
+          // HttpEndpointModal already provides endpoints in col
+          addCollection(col)
         } else {
           addCollection(col)
         }
@@ -308,7 +312,7 @@ export function CollectionTree(): JSX.Element {
                 className="flex min-w-0 flex-1 items-center text-left text-[var(--color-text-secondary)]"
                 onClick={() => {
                   void toggleCollection(col.id)
-                  if (col.protocol === 'graphql') {
+                  if (col.protocol === 'graphql' || col.protocol === 'http') {
                     const ep = col.endpoints[0]
                     if (ep) {
                       openTab({ type: 'scratch', id: `scratch::${ep.id}`, label: col.name, endpointId: ep.id })
@@ -320,7 +324,7 @@ export function CollectionTree(): JSX.Element {
                 <span className="truncate font-medium">{col.name}</span>
               </button>
               <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                {col.protocol === 'graphql' && (
+                {(col.protocol === 'graphql' || col.protocol === 'http') && (
                   <button
                     type="button"
                     onClick={() => {
@@ -349,7 +353,7 @@ export function CollectionTree(): JSX.Element {
                     ＋
                   </button>
                 )}
-                {col.protocol !== 'grpc' && col.protocol !== 'graphql' && (
+                {col.protocol !== 'grpc' && col.protocol !== 'graphql' && col.protocol !== 'http' && (
                   <button
                     type="button"
                     onClick={() => setModalState({ type: 'add-endpoint', collectionId: col.id })}
@@ -379,8 +383,8 @@ export function CollectionTree(): JSX.Element {
                 )}
               </div>
             </div>
-            {/* GraphQL: ケースをコレクション直下に表示（エンドポイント行は非表示） */}
-            {expandedCollections.has(col.id) && col.protocol === 'graphql' && (() => {
+            {/* GraphQL / HTTP: ケースをコレクション直下に表示（エンドポイント行は非表示） */}
+            {expandedCollections.has(col.id) && (col.protocol === 'graphql' || col.protocol === 'http') && (() => {
               const ep = col.endpoints[0]
               if (!ep) return null
               return (casesByEndpoint[ep.id] ?? []).map((caseName) => (
@@ -435,8 +439,8 @@ export function CollectionTree(): JSX.Element {
                 </Fragment>
               ))
             })()}
-            {/* gRPC / HTTP: エンドポイント行を表示 */}
-            {expandedCollections.has(col.id) && col.protocol !== 'graphql' &&
+            {/* gRPC: エンドポイント行を表示 */}
+            {expandedCollections.has(col.id) && col.protocol !== 'graphql' && col.protocol !== 'http' &&
               col.endpoints
                 .filter((ep) => isEndpointVisible(ep))
                 .map((ep) => (
@@ -543,7 +547,7 @@ export function CollectionTree(): JSX.Element {
         ))}
       </div>
 
-      {modalState?.type === 'add-collection' && (
+      {modalState?.type === 'add-collection' && activeProtocol !== 'http' && (
         <CollectionModal
           mode="add"
           activeProtocol={activeProtocol}
@@ -553,11 +557,30 @@ export function CollectionTree(): JSX.Element {
           onClose={() => setModalState(null)}
         />
       )}
-      {modalState?.type === 'edit-collection' && (
+      {modalState?.type === 'edit-collection' && activeProtocol !== 'http' && (
         <CollectionModal
           mode="edit"
           initial={modalState.collection}
           activeProtocol={activeProtocol}
+          environment={activeEnv}
+          isSubmitting={isSubmitting}
+          onSubmit={handleCollectionSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'add-collection' && activeProtocol === 'http' && (
+        <HttpEndpointModal
+          mode="add"
+          environment={activeEnv}
+          isSubmitting={isSubmitting}
+          onSubmit={handleCollectionSubmit}
+          onClose={() => setModalState(null)}
+        />
+      )}
+      {modalState?.type === 'edit-collection' && activeProtocol === 'http' && (
+        <HttpEndpointModal
+          mode="edit"
+          initial={modalState.collection}
           environment={activeEnv}
           isSubmitting={isSubmitting}
           onSubmit={handleCollectionSubmit}

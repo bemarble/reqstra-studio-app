@@ -8,6 +8,7 @@ import type {
   GraphQLTarget,
   GrpcEndpoint,
   GraphQLEndpoint,
+  HttpEndpoint,
 } from '../../../shared/types/project'
 
 interface ProjectState {
@@ -35,8 +36,8 @@ interface ProjectState {
   ) => void
   deleteProtocolTarget: (envId: string, protocol: 'grpc' | 'http' | 'graphql', targetId: string) => void
   deleteCollection: (id: string) => void
-  addEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint) => void
-  updateEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint) => void
+  addEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint | HttpEndpoint) => void
+  updateEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint | HttpEndpoint) => void
   deleteEndpoint: (collectionId: string, endpointId: string) => void
 }
 
@@ -152,7 +153,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       }
     }),
-  addEndpoint: (collectionId, endpoint) =>
+  addEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint | HttpEndpoint) =>
     set((state) => {
       if (!state.project) return state
       return {
@@ -164,7 +165,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       }
     }),
-  updateEndpoint: (collectionId, endpoint) =>
+  updateEndpoint: (collectionId: string, endpoint: GrpcEndpoint | GraphQLEndpoint | HttpEndpoint) =>
     set((state) => {
       if (!state.project) return state
       return {
