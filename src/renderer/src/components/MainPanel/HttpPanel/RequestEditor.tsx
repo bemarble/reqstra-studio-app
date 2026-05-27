@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import { MonacoEditor } from '../../shared/MonacoEditor'
 import { MetadataEditor } from '../GrpcPanel/MetadataEditor'
 import type { HttpMethod, HttpBodyType, GraphQLAuth } from '../../../../../shared/types/project'
@@ -58,6 +58,10 @@ export function RequestEditor({
 }: Props): JSX.Element {
   const [bottomTab, setBottomTab] = useState<BottomTab>('body')
 
+  useEffect(() => {
+    if (bodyType === 'none' && bottomTab === 'body') setBottomTab('headers')
+  }, [bodyType, bottomTab])
+
   const pathParamKeys = extractPathParamKeys(path)
   const hasPathParams = pathParamKeys.length > 0
 
@@ -66,7 +70,7 @@ export function RequestEditor({
   }
 
   const tabs: { id: BottomTab; label: string; show: boolean }[] = [
-    { id: 'body', label: bodyType === 'json' ? 'Body' : 'Query Params', show: true },
+    { id: 'body', label: bodyType === 'json' ? 'Body' : 'Query Params', show: bodyType !== 'none' },
     { id: 'path-params', label: 'Path Params', show: hasPathParams },
     { id: 'headers', label: 'Headers', show: true },
     { id: 'auth', label: 'Auth', show: true },
@@ -99,6 +103,7 @@ export function RequestEditor({
         >
           <option value="json">JSON Body</option>
           <option value="query">Query Params</option>
+          <option value="none">None</option>
         </select>
       </div>
 

@@ -1,6 +1,6 @@
 import * as yaml from 'yaml'
 import type { HttpRequestParams, HttpResponse } from '../../shared/types/ipc'
-import type { GraphQLAuth } from '../../shared/types/project'
+import type { GraphQLAuth, HttpBodyType } from '../../shared/types/project'
 
 export function buildUrl(
   baseUrl: string,
@@ -67,7 +67,7 @@ export function serializeHttpCaseFile(
   body: string,
   queryParams: Record<string, string>,
   pathParams: Record<string, string>,
-  bodyType: 'json' | 'query',
+  bodyType: HttpBodyType,
 ): string {
   const obj: Record<string, unknown> = {}
   if (bodyType === 'json' && body.trim()) obj.body = body

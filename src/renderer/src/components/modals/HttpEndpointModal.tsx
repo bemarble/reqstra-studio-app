@@ -134,7 +134,7 @@ export function HttpEndpointModal({
             ボディタイプ
           </label>
           <div className="flex gap-3">
-            {(['json', 'query'] as HttpBodyType[]).map((bt) => (
+            {(['json', 'query', 'none'] as HttpBodyType[]).map((bt) => (
               <label key={bt} className="flex cursor-pointer items-center gap-1.5 text-xs text-[var(--color-text-primary)]">
                 <input
                   type="radio"
@@ -143,7 +143,7 @@ export function HttpEndpointModal({
                   onChange={() => setBodyType(bt)}
                   className="accent-[var(--color-text-accent)]"
                 />
-                {bt === 'json' ? 'JSON' : 'Query Params'}
+                {bt === 'json' ? 'JSON' : bt === 'query' ? 'Query Params' : 'None'}
               </label>
             ))}
           </div>

@@ -27,7 +27,7 @@ export interface HttpTarget {
 }
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-export type HttpBodyType = 'json' | 'query'
+export type HttpBodyType = 'json' | 'query' | 'none'
 
 export interface HttpEndpoint {
   id: string
