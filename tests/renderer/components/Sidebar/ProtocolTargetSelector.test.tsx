@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { ProtocolTargetSelector } from '../../../../src/renderer/src/components/Sidebar/ProtocolTargetSelector'
 import { useProjectStore } from '../../../../src/renderer/src/store/projectStore'
 import { useAppStore } from '../../../../src/renderer/src/store/appStore'
